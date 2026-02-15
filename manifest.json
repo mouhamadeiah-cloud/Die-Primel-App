@@ -1,12 +1,17 @@
 {
-  "background_color": "hsv(89, 36%, 85%)",
-  "dir": "ltr",
-  "display": "fullscreen",
-  "name": "mouhamadeiah-cloud.github",
+  "name": "Die Primel Eiscafé",
+  "short_name": "Primel App",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#e6d5b8",
+  "theme_color": "#2d5a27",
   "orientation": "any",
-  "scope": "/",
-  "short_name": "Die rimel",
-  "start_url": "/index.html ",
-  "theme_color": "hsv(329, 14%, 98%)",
-  "id": "Primelapp"
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
