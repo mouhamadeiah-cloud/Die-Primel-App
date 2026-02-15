@@ -1,11 +1,12 @@
 {
-  "background_color": "#ffffff",
+  "background_color": "hsv(89, 36%, 85%)",
   "dir": "ltr",
-  "display": "standalone",
+  "display": "fullscreen",
   "name": "mouhamadeiah-cloud.github",
   "orientation": "any",
   "scope": "/",
-  "short_name": "mouhamadeiah-cloud.github",
-  "start_url": "/",
-  "theme_color": "#ffffff"
+  "short_name": "Die rimel",
+  "start_url": "/index.html ",
+  "theme_color": "hsv(329, 14%, 98%)",
+  "id": "Primelapp"
 }
