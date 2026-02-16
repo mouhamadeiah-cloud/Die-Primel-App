@@ -1790,6 +1790,7 @@
     function changeQty(i,d) { if (cartNew[i]) { cartNew[i].quantity = (cartNew[i].quantity||1)+d; if (cartNew[i].quantity<=0) cartNew.splice(i,1); renderCart(); } }
     function removeFromCart(i) { cartNew.splice(i,1); renderCart(); }
 // ========== CART ACTIONS ==========
+// ========== CART ACTIONS ==========
 function clearFullCart() { 
     // Prüfen ob überhaupt etwas im Warenkorb ist
     if(cartNew.length || cartLocked.length) {
