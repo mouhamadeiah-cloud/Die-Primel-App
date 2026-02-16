@@ -1,17 +1,119 @@
 {
-  "name": "Die Primel Eiscafé",
-  "short_name": "Primel App",
-  "start_url": "index.html",
+  "name": "Die Primel POS",
+  "short_name": "Primel POS",
+  "description": "Professionelles Point-of-Sale-System für Die Primel - Restaurant & Café",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#e6d5b8",
-  "theme_color": "#2d5a27",
-  "orientation": "any",
+  "background_color": "#ecf0f1",
+  "theme_color": "#2c3e50",
+  "orientation": "landscape",
+  "categories": ["business", "food", "restaurant"],
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/main-view.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Hauptansicht mit Kategorien und Warenkorb"
+    },
+    {
+      "src": "screenshots/kitchen-view.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Küchenansicht mit aktiven Bestellungen"
+    },
+    {
+      "src": "screenshots/admin-view.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Admin-Bereich für Verwaltung"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Küche öffnen",
+      "short_name": "Küche",
+      "description": "Öffnet die Küchenansicht",
+      "url": "/?view=kitchen",
+      "icons": [{ "src": "icons/kitchen-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Neue Bestellung",
+      "short_name": "Bestellung",
+      "description": "Neue Bestellung aufgeben",
+      "url": "/?action=new-order",
+      "icons": [{ "src": "icons/order-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Tische verwalten",
+      "short_name": "Tische",
+      "description": "Alle aktiven Tische anzeigen",
+      "url": "/?view=tables",
+      "icons": [{ "src": "icons/tables-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Statistiken",
+      "short_name": "Stats",
+      "description": "Umsatzstatistiken anzeigen",
+      "url": "/?view=stats",
+      "icons": [{ "src": "icons/stats-icon.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "lang": "de",
+  "dir": "ltr"
 }
