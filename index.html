@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
- <link rel="manifest" href="manifest.json">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/pwabuilder-sw.js');
-  }
-</script>  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
     <title>Die Primel POS - V3 Professional</title>
@@ -174,40 +168,12 @@
             flex-direction: column;
             justify-content: center;
             box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
-            border: 2px solid rgba(255,255,255,0.3);
         }
-        .table-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 20px rgba(0,0,0,0.3);
-        }
-        /* حالة الطاولة الجديدة (خلال 5 دقائق) */
-        .table-box.new-order {
-            background: linear-gradient(145deg, #27ae60, #2ecc71);
-            border-color: #f1c40f;
-            animation: pulse-green 2s infinite;
-        }
-        /* حالة الطاولة القديمة (أكثر من 30 دقيقة) */
-        .table-box.old-order {
-            background: linear-gradient(145deg, #c0392b, #e74c3c);
-            border-color: #95a5a6;
-            opacity: 0.9;
-        }
-        /* حالة الطاولة العادية */
-        .table-box.normal {
-            background: linear-gradient(145deg, #f39c12, #f1c40f);
-        }
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
-            70% { box-shadow: 0 0 0 15px rgba(46, 204, 113, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
-        }
-
         .table-box small {
             font-size: 0.7em;
             display: block;
             margin-top: 5px;
-            color: rgba(255,255,255,0.8);
+            color: #ffe082;
         }
         .table-box button {
             font-size: 0.6em;
@@ -217,12 +183,6 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            background: rgba(0,0,0,0.3);
-            color: white;
-            transition: background 0.2s;
-        }
-        .table-box button:hover {
-            background: rgba(0,0,0,0.5);
         }
         
         .btn-main { 
@@ -728,7 +688,7 @@
 
 <header>
     <button onclick="openKitchen()">KÜCHE</button>
-    <h2>DIE PRIMEL POS</h2>
+    <h2>DIE PRIMEL</h2>
     <div>
         <button onclick="openTables()">TISCHE</button>
         <button onclick="showLoginModal()">ADMIN</button>
@@ -1114,8 +1074,6 @@
     let editContext = { type: null, id: null, name: '', price: null };
     let currentShowTable = null;
     let currentPin = '';
-    let kitchenModalOpen = false;
-    let tablesModalOpen = false;
 
     // دالة لضمان وجود order لكل العناصر
     function ensureOrders() {
@@ -1137,145 +1095,6 @@
         });
     }
 
-    // ========== REAL-TIME SYNC ==========
-    // Permanent listener for active orders
-    db.ref('active_orders').on('value', (snapshot) => {
-        const allData = snapshot.val();
-        const newOrders = [];
-        
-        if (allData) {
-            Object.entries(allData).forEach(([tNum, batches]) => {
-                // Find existing order for this table
-                let existing = orders.find(o => o.table == tNum && o.status === 'open');
-                if (!existing) {
-                    // Create new order object
-                    existing = {
-                        id: Date.now() + Math.random(), // dummy id, but will be overwritten when pushing
-                        table: tNum,
-                        status: 'open',
-                        batches: []
-                    };
-                }
-                // Convert batches object to array and store the bId
-                const batchArray = Object.entries(batches).map(([bId, batch]) => ({
-                    ...batch,
-                    batchId: batch.batchId || parseInt(bId) || Date.now(),
-                    firebaseKey: bId // store the real firebase key
-                }));
-                existing.batches = batchArray;
-                newOrders.push(existing);
-            });
-        }
-        
-        // Update orders array (only keep open orders from firebase)
-        orders = newOrders;
-        
-        // If kitchen modal is open, update its content
-        if (kitchenModalOpen) {
-            renderKitchenContent();
-        }
-        // If tables modal is open, update its content
-        if (tablesModalOpen) {
-            renderTablesContent();
-        }
-        
-        // Save to localStorage for persistence
-        save();
-    }, (error) => {
-        console.error("active_orders sync error:", error);
-    });
-
-    // ========== RENDER KITCHEN ==========
-    function renderKitchenContent() {
-        const container = document.getElementById('kitchen-content');
-        if (!container) return;
-        if (!orders || orders.length === 0) {
-            container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>";
-            return;
-        }
-        let html = "";
-        const now = Date.now();
-        orders.forEach(order => {
-            order.batches.forEach(batch => {
-                const isLate = (now - batch.batchId) > 300000;
-                const lateClass = isLate ? "late-blink" : "";
-                // Use the stored firebaseKey for deletion
-                const firebaseKey = batch.firebaseKey;
-                html += `
-                    <div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')">
-                        <div class="card-header-pos">
-                            <b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.table === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.table}</b>
-                            <b style="color:#2980b9;">🕒 ${batch.time || ''}</b>
-                        </div>
-                        <div style="flex-grow: 1;">
-                            ${batch.items ? batch.items.map(i => `
-                                <div style="border-bottom:1px solid #f0f0f0; padding:8px 0;">
-                                    <div style="font-size:1.1rem; font-weight:bold;">
-                                        ${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span>
-                                    </div>
-                                    <div style="font-size:0.85rem; color:#666;">
-                                        ${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}
-                                    </div>
-                                    ${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}
-                                </div>
-                            `).join('') : 'Keine Items'}
-                        </div>
-                        <button class="btn-main" style="background:#27ae60; margin-top:10px;" 
-                                onclick="event.stopPropagation(); finishOrder('${order.table}', '${firebaseKey}')">
-                            FERTIG
-                        </button>
-                    </div>`;
-            });
-        });
-        container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
-    }
-
-    // ========== RENDER TABLES CONTENT ==========
-    function renderTablesContent() {
-        const grid = document.getElementById('tables-grid');
-        if (!grid) return;
-        const openOrders = orders.filter(o => o.status === 'open');
-        const now = Date.now();
-        
-        const sortedOrders = openOrders.sort((a, b) => {
-            if (a.table === 'takeaway') return 1;
-            if (b.table === 'takeaway') return -1;
-            return (parseInt(a.table) || 0) - (parseInt(b.table) || 0);
-        });
-
-        grid.innerHTML = sortedOrders.map(o => {
-            let lastTime = '';
-            let lastBatchId = 0;
-            if (o.batches && o.batches.length > 0) {
-                const lastBatch = o.batches[o.batches.length - 1];
-                lastTime = lastBatch.time || '';
-                lastBatchId = lastBatch.batchId || 0;
-            }
-            
-            const diffMinutes = lastBatchId ? (now - lastBatchId) / 60000 : 0;
-            let statusClass = 'normal';
-            if (diffMinutes <= 5) {
-                statusClass = 'new-order';
-            } else if (diffMinutes > 30) {
-                statusClass = 'old-order';
-            } else {
-                statusClass = 'normal';
-            }
-
-            return `
-                <div class="table-box ${statusClass}" data-table="${o.table}">
-                    <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
-                    <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
-                    <div style="margin-top: 10px;">
-                        <button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button>
-                        <button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button>
-                        <button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button>
-                    </div>
-                </div>
-            `;
-        }).join('') || "Keine aktiven Tische";
-    }
-
     // ========== CORE FUNCTIONS ==========
     function openModal(id) { 
         document.querySelectorAll('.modal').forEach(m => m.style.zIndex = '1000');
@@ -1292,8 +1111,6 @@
             modal.style.display = 'none';
             modal.style.zIndex = '1000';
         }
-        if (id === 'modal-kitchen') kitchenModalOpen = false;
-        if (id === 'modal-tables') tablesModalOpen = false;
     }
 
     // ========== LOGIN FUNCTIONS ==========
@@ -1525,8 +1342,26 @@
     }
 
     function openTables() {
-        tablesModalOpen = true;
-        renderTablesContent();
+        const grid = document.getElementById('tables-grid');
+        const openOrders = orders.filter(o => o.status === 'open');
+        grid.innerHTML = openOrders.map(o => {
+            let lastTime = '';
+            if (o.batches && o.batches.length > 0) {
+                const lastBatch = o.batches[o.batches.length - 1];
+                lastTime = lastBatch.time || '';
+            }
+            return `
+                <div class="table-box">
+                    <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
+                    <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
+                    <div style="margin-top: 10px;">
+                        <button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button>
+                        <button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button>
+                        <button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button>
+                    </div>
+                </div>
+            `;
+        }).join('') || "Keine aktiven Tische";
         openModal('modal-tables');
     }
 
@@ -1536,24 +1371,63 @@
             const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open');
             if (orderIndex !== -1) {
                 const order = orders[orderIndex];
+                // Als bezahlt markieren und in sales verschieben
                 order.status = 'paid';
                 order.paidTime = Date.now();
                 sales.push({ ...order });
-                // Remove from active orders
-                db.ref('active_orders/' + tableId).remove()
-                .then(() => {
-                    // orders will be updated by listener
-                    openTables();
-                })
-                .catch(console.error);
+                orders.splice(orderIndex, 1);
+                save();
+                db.ref('active_orders/' + tableId).remove();
+                openTables();
             }
         });
     }
 
     function openKitchen() {
-        kitchenModalOpen = true;
-        renderKitchenContent();
         openModal('modal-kitchen');
+        const container = document.getElementById('kitchen-content');
+        container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>";
+
+        db.ref('active_orders').on('value', (snapshot) => {
+            const allData = snapshot.val();
+            if (!allData) {
+                container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>";
+                return;
+            }
+            let html = "";
+            const now = Date.now();
+            Object.entries(allData).forEach(([tNum, batches]) => {
+                Object.entries(batches).forEach(([bId, batch]) => {
+                    const isLate = (now - batch.batchId) > 300000;
+                    const lateClass = isLate ? "late-blink" : "";
+                    html += `
+                        <div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')">
+                            <div class="card-header-pos">
+                                <b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${tNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + tNum}</b>
+                                <b style="color:#2980b9;">🕒 ${batch.time || ''}</b>
+                            </div>
+                            <div style="flex-grow: 1;">
+                                ${batch.items ? batch.items.map(i => `
+                                    <div style="border-bottom:1px solid #f0f0f0; padding:8px 0;">
+                                        <div style="font-size:1.1rem; font-weight:bold;">
+                                            ${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span>
+                                        </div>
+                                        <div style="font-size:0.85rem; color:#666;">
+                                            ${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}
+                                        </div>
+                                        ${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}
+                                    </div>
+                                `).join('') : 'Keine Items'}
+                            </div>
+                            <button class="btn-main" style="background:#27ae60; margin-top:10px;" 
+                                    onclick="event.stopPropagation(); finishOrder('${tNum}', '${bId}')">
+                                FERTIG
+                            </button>
+                        </div>`;
+                });
+            });
+            container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
+        });
     }
 
     function showOrder(tableId) {
@@ -1592,12 +1466,11 @@
                 order.status = 'paid';
                 order.paidTime = Date.now();
                 sales.push({ ...order });
-                db.ref('active_orders/' + currentShowTable).remove()
-                .then(() => {
-                    closeModal('modal-show-order'); 
-                    openTables();
-                })
-                .catch(console.error);
+                orders.splice(idx, 1); 
+                save(); 
+                db.ref('active_orders/' + currentShowTable).remove(); 
+                closeModal('modal-show-order'); 
+                openTables(); 
             }
         });
     }
@@ -1622,9 +1495,8 @@
                 products = data.products || [];
                 extras = data.extras || [];
                 zutaten = data.zutaten || [];
+                orders = data.orders || [];
                 sales = data.sales || [];
-                // orders are handled by realtime listener, but we need initial load from local?
-                // We'll keep orders from local but listener will overwrite.
             } else { 
                 saveToFirebase(); 
             }
@@ -1635,7 +1507,7 @@
     }
 
     function saveToFirebase() {
-        db.ref('data').set({ categories, products, extras, zutaten, sales });
+        db.ref('data').set({ categories, products, extras, zutaten, orders, sales });
     }
 
     function save() {
@@ -1692,7 +1564,6 @@
         document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb";
     }
 
-    // دوال الترتيب
     function moveUp(type, id) {
         let arr;
         if (type === 'category') arr = categories;
@@ -1801,7 +1672,6 @@
             showConfirm("Möchten Sie den gesamten Warenkorb (inkl. bestehender Bestellungen) löschen?", () => {
                 cartNew = []; 
                 cartLocked = []; 
-                activeTable = null; // Zurücksetzen der aktiven Tabelle
                 renderCart();
             });
         }
@@ -1978,7 +1848,18 @@
         }; 
         db.ref('active_orders/' + tNum).push(newBatch)
         .then(() => { 
-            // Orders will be updated by listener
+            let existing = orders.find(o => o.table == tNum && o.status === 'open'); 
+            if (existing) { 
+                existing.batches.push(newBatch); 
+            } else { 
+                orders.push({ 
+                    id: Date.now(), 
+                    table: tNum, 
+                    status: 'open', 
+                    batches: [newBatch] 
+                }); 
+            } 
+            save(); 
             db.ref('notifications/kitchen').set({ timestamp: Date.now() }); 
             showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet`); 
             resetCart(); 
@@ -1986,22 +1867,8 @@
         }).catch(e => { console.error(e); alert("Fehler!"); }); 
     }
 
-    function finishOrder(tNum, bId) { 
-        db.ref('active_orders/' + tNum + '/' + bId).remove()
-        .catch(e => console.error(e)); 
-    }
-
-    function loadTable(tNum) { 
-        const order = orders.find(o => o.table == tNum && o.status == 'open'); 
-        if (!order) return; 
-        activeTable = tNum; 
-        cartLocked = []; 
-        order.batches.forEach(b => cartLocked.push(...b.items)); 
-        cartNew = []; 
-        renderCart(); 
-        closeModal('modal-tables'); 
-    }
-
+    function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
+    function loadTable(tNum) { const order = orders.find(o => o.table == tNum && o.status == 'open'); if (!order) return; activeTable = tNum; cartLocked = []; order.batches.forEach(b => cartLocked.push(...b.items)); cartNew = []; renderCart(); closeModal('modal-tables'); }
     function payTable(oid) { 
         const order = orders.find(o => o.id == oid); 
         window.currentPayId = oid; 
@@ -2018,15 +1885,12 @@
         order.payMethod = method; 
         order.paidTime = Date.now();
         sales.push({...order});
-        db.ref('active_orders/' + order.table).remove()
-        .then(() => {
-            save(); 
-            alert("Bezahlt mit " + method); 
-            if(activeTable == order.table) resetCart(); 
-            closeModal('modal-pay'); 
-            openTables(); 
-        })
-        .catch(console.error);
+        orders = orders.filter(o => o.id !== order.id);
+        save(); 
+        alert("Bezahlt mit " + method); 
+        if(activeTable == order.table) resetCart(); 
+        closeModal('modal-pay'); 
+        openTables(); 
     }
 
     // ========== CONFIRM HELPER ==========
@@ -2036,6 +1900,5 @@
     init();
 </script>
 </body>
-
 </html>
 
