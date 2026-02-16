@@ -960,16 +960,6 @@
 <div id="modal-edit" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal('modal-edit')">&times;</span>
-
-
-
-
-
-
-
-
-
-
         <h3 id="edit-title">Bearbeiten</h3>
         <input type="text" id="edit-input" placeholder="Name">
         <input type="number" id="edit-price" placeholder="Preis" style="display:none;">
@@ -1105,44 +1095,12 @@
     });
 
     // ========== DATA ==========
-// ========== DATA (Sourced from Firebase for Sync) ==========
-let categories = [];
-let products = [];
-let extras = [];
-let zutaten = [];
-let orders = JSON.parse(localStorage.getItem('orders')) || [];
-let sales = JSON.parse(localStorage.getItem('sales')) || [];
-
-// دالة لجلب البيانات وتحديث الواجهة تلقائياً في الجهازين
-function startDataSync() {
-    // مزامنة الكاتيجوري
-    db.ref('app_data/categories').on('value', (snapshot) => {
-        if (snapshot.exists()) {
-            categories = snapshot.val();
-            // تأكد أن هذه الدالة موجودة في كودك لرسم القوائم
-            if (typeof renderCategories === "function") renderCategories();
-        }
-    });
-
-    // مزامنة المنتجات
-    db.ref('app_data/products').on('value', (snapshot) => {
-        if (snapshot.exists()) {
-            products = snapshot.val();
-            if (typeof renderProducts === "function") renderProducts();
-        }
-    });
-
-    // مزامنة الإضافات والمكونات
-    db.ref('app_data/extras').on('value', (snapshot) => {
-        if (snapshot.exists()) extras = snapshot.val();
-    });
-    db.ref('app_data/zutaten').on('value', (snapshot) => {
-        if (snapshot.exists()) zutaten = snapshot.val();
-    });
-}
-
-// تشغيل المزامنة فوراً عند فتح التطبيق
-startDataSync();
+    let categories = JSON.parse(localStorage.getItem('cats')) || [];
+    let products = JSON.parse(localStorage.getItem('prods')) || [];
+    let extras = JSON.parse(localStorage.getItem('extras')) || [];
+    let zutaten = JSON.parse(localStorage.getItem('zutaten')) || [];
+    let orders = JSON.parse(localStorage.getItem('orders')) || [];
+    let sales = JSON.parse(localStorage.getItem('sales')) || [];
     
     let cartNew = [];
     let cartLocked = [];
@@ -1271,14 +1229,6 @@ startDataSync();
         });
         container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
     }
-
-
-
-
-
-
-
-
 
     // ========== RENDER TABLES CONTENT ==========
     function renderTablesContent() {
@@ -1559,14 +1509,6 @@ startDataSync();
             });
     }
 
-
-
-
-
-
-
-
-
     function openAdmin() { 
         renderCats(); 
         const filter = document.getElementById('admin-prod-filter');
@@ -1696,23 +1638,15 @@ startDataSync();
         db.ref('data').set({ categories, products, extras, zutaten, sales });
     }
 
-function save() {
-    // 1. حافظ على كل أسطر الـ localStorage القديمة كما هي (لأنك تستخدمها في الـ Sales والـ Orders)
-    localStorage.setItem('cats', JSON.stringify(categories));
-    localStorage.setItem('prods', JSON.stringify(products));
-    localStorage.setItem('extras', JSON.stringify(extras));
-    localStorage.setItem('zutaten', JSON.stringify(zutaten));
-    localStorage.setItem('orders', JSON.stringify(orders)); // لا تحذف هذا
-    localStorage.setItem('sales', JSON.stringify(sales));   // ولا هذا
-
-    // 2. أضف فقط أسطر الرفع للفايربيس للقوائم التي تريد توحيدها
-    db.ref('app_data/categories').set(categories);
-    db.ref('app_data/products').set(products);
-    db.ref('app_data/extras').set(extras);
-    db.ref('app_data/zutaten').set(zutaten);
-    
-    // ملاحظة: الأوردّر (Orders) أنت أصلاً تربطها بالفايربيس في جزء آخر من كودك
-}
+    function save() {
+        localStorage.setItem('cats', JSON.stringify(categories));
+        localStorage.setItem('prods', JSON.stringify(products));
+        localStorage.setItem('extras', JSON.stringify(extras));
+        localStorage.setItem('zutaten', JSON.stringify(zutaten));
+        localStorage.setItem('orders', JSON.stringify(orders));
+        localStorage.setItem('sales', JSON.stringify(sales));
+        saveToFirebase();
+    }
 
     // ========== RENDERING ==========
     function renderCats() {
@@ -2104,3 +2038,4 @@ function save() {
 </body>
 
 </html>
+
