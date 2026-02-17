@@ -952,17 +952,22 @@
 </div>
 
 <!-- Tables Modal (active tables) -->
+<!-- Tables Modal (active tables) -->
 <div id="modal-tables" class="modal">
     <div class="modal-content">
         <span class="close" onclick="closeModal('modal-tables'); return false;">&times;</span>
-        <h2>AKTIVE TISCHE</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2vh;">
+            <h2 style="margin:0;">AKTIVE TISCHE</h2>
+            <button onclick="refreshTables()" style="background: var(--blue); color: white; border: none; padding: 1vh 2vw; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
+                🔄 AKTUALISIEREN
+            </button>
+        </div>
         <div id="tables-grid" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div>
         <div style="margin-top: 2vh; text-align: center;">
             <button class="btn-main" style="background: var(--blue); width: auto; padding: 1vh 4vw;" onclick="closeModal('modal-tables')">Schließen</button>
         </div>
     </div>
 </div>
-
 <!-- Extras Modal -->
 <div id="modal-extras" class="modal">
     <div class="modal-content" style="max-width:400px">
@@ -1999,6 +2004,59 @@ function clearFullCart() {
     // ========== CONFIRM HELPER ==========
     function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
+// ========== MANUELLE TISCH-SYNCHRONISATION ==========
+function refreshTables() {
+    showToast("🔄 Tische werden synchronisiert...");
+    
+    // Aktive Bestellungen aus Firebase laden
+    db.ref('active_orders').once('value', (snapshot) => {
+        const activeData = snapshot.val();
+        
+        if (activeData) {
+            // Neue orders aus Firebase erstellen
+            const newOrders = [];
+            
+            Object.entries(activeData).forEach(([tableNum, batches]) => {
+                const order = {
+                    id: Date.now() + Math.random(),
+                    table: tableNum,
+                    status: 'open',
+                    batches: []
+                };
+                
+                Object.entries(batches).forEach(([batchId, batch]) => {
+                    order.batches.push({
+                        batchId: batch.batchId || batchId,
+                        time: batch.time,
+                        date: batch.date,
+                        items: batch.items || [],
+                        status: batch.status || 'new'
+                    });
+                });
+                
+                newOrders.push(order);
+            });
+            
+            // orders aktualisieren
+            orders = newOrders;
+            localStorage.setItem('orders', JSON.stringify(orders));
+            
+            // Tische-Ansicht neu laden
+            openTables();
+            
+            showToast("✅ Tische synchronisiert");
+        } else {
+            // Keine aktiven Tische in Firebase
+            orders = [];
+            localStorage.setItem('orders', JSON.stringify(orders));
+            openTables();
+            showToast("✅ Keine aktiven Tische");
+        }
+    }).catch(error => {
+        console.error(error);
+        showToast("❌ Fehler bei Synchronisation");
+    });
+}
 
     init();
 </script>
