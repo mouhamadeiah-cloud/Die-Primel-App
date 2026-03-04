@@ -2239,14 +2239,7 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-// في نهاية دالة openTables، بعد عرض البيانات
-if (window.tableInterval) clearInterval(window.tableInterval);
 
-window.tableInterval = setInterval(() => {
-    if (document.getElementById('modal-tables').style.display === 'block') {
-        openTables(); // إعادة تحميل البيانات
-    }
-}, 30000); // كل 30 ثانية
 </script>
 
 </body>
