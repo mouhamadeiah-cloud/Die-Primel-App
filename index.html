@@ -1404,137 +1404,31 @@
         openModal('modal-admin'); 
     }
 
-function openTables() {
-    openModal('modal-tables');
-    const grid = document.getElementById('tables-grid');
-    grid.innerHTML = '<div style="text-align:center; padding:20px;">Lade Tische...</div>';
-    
-    // إزالة المستمع القديم إذا كان موجوداً
-    if (window.tablesListener) {
-        db.ref('active_orders').off('value', window.tablesListener);
-    }
-    
-    // إنشاء مستمع جديد للتحديثات المباشرة
-    window.tablesListener = db.ref('active_orders').on('value', (snapshot) => {
-        const activeOrdersData = snapshot.val();
-        
-        if (!activeOrdersData || Object.keys(activeOrdersData).length === 0) {
-            grid.innerHTML = "<div style='text-align:center; padding:20px;'>Keine aktiven Tische</div>";
-            return;
-        }
-        
-        // بناء HTML للطاولات النشطة
-        let html = '';
-        
-        // ترتيب الطاولات: الأحدث أولاً (حسب آخر طلب)
-        const tablesWithTime = [];
-        
-        Object.entries(activeOrdersData).forEach(([tableNum, batches]) => {
-            if (batches) {
-                const batchArray = Object.values(batches);
-                const lastBatch = batchArray[batchArray.length - 1];
-                const lastTime = lastBatch?.batchId || 0;
-                
-                tablesWithTime.push({
-                    tableNum,
-                    batches,
-                    lastTime,
-                    batchCount: batchArray.length
-                });
+    function openTables() {
+        const grid = document.getElementById('tables-grid');
+        const openOrders = orders.filter(o => o.status === 'open');
+        grid.innerHTML = openOrders.map(o => {
+            let lastTime = '';
+            if (o.batches && o.batches.length > 0) {
+                const lastBatch = o.batches[o.batches.length - 1];
+                lastTime = lastBatch.time || '';
             }
-        });
-        
-        // ترتيب حسب آخر وقت (الأحدث أولاً)
-        tablesWithTime.sort((a, b) => b.lastTime - a.lastTime);
-        
-        tablesWithTime.forEach(({tableNum, batches, lastTime, batchCount}) => {
-            // الحصول على آخر وقت بشكل مقروء
-            let timeString = '';
-            if (batches) {
-                const lastBatch = Object.values(batches).pop();
-                timeString = lastBatch.time || '';
-            }
-            
-            html += `
-                <div class="table-box" data-table="${tableNum}">
-                    <h3>${tableNum === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + tableNum}</h3>
-                    <small>🕒 ${timeString}</small>
-                    <small>📦 ${batchCount} Bestellung(en)</small>
-                    <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
-                        <button class="edit-table-btn" style="background:var(--blue); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Edit</button>
-                        <button class="show-table-btn" style="background:var(--orange); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Show</button>
-                        <button class="pay-table-btn" style="background:var(--green); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Pay</button>
-                        <button class="delete-table-btn" style="background:var(--red); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Löschen</button>
+            return `
+                <div class="table-box">
+                    <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
+                    <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
+                    <div style="margin-top: 10px;">
+                        <button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button>
+                        <button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button>
+                        <button onclick="event.stopPropagation(); payTable(${o.id})" style="background:var(--green);">Pay</button>
+                        <button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button>
                     </div>
                 </div>
             `;
-        });
-        
-        grid.innerHTML = html;
-        
-        // إعادة ربط الأزرار بعد تحديث HTML
-        attachTableButtons();
-        
-        // إضافة تأثير بصري عند التحديث
-        grid.style.opacity = '0.5';
-        setTimeout(() => {
-            grid.style.opacity = '1';
-        }, 100);
-    });
-}
+        }).join('') || "Keine aktiven Tische";
+        openModal('modal-tables');
+    }
 
-// دالة جديدة لربط الأزرار
-function attachTableButtons() {
-    // أزرار Edit
-    document.querySelectorAll('.edit-table-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tableBox = e.target.closest('.table-box');
-            const tableNum = tableBox.dataset.table;
-            loadTableFromFirebase(tableNum);
-        });
-    });
-    
-    // أزرار Show
-    document.querySelectorAll('.show-table-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tableBox = e.target.closest('.table-box');
-            const tableNum = tableBox.dataset.table;
-            showOrderFromFirebase(tableNum);
-        });
-    });
-    
-    // أزرار Pay
-    document.querySelectorAll('.pay-table-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tableBox = e.target.closest('.table-box');
-            const tableNum = tableBox.dataset.table;
-            payTableFromFirebase(tableNum);
-        });
-    });
-    
-    // أزرار Delete
-    document.querySelectorAll('.delete-table-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tableBox = e.target.closest('.table-box');
-            const tableNum = tableBox.dataset.table;
-            confirmDeleteTableFromFirebase(tableNum);
-        });
-    });
-    
-    // النقر على الـ table-box نفسه
-    document.querySelectorAll('.table-box').forEach(box => {
-        box.addEventListener('click', (e) => {
-            // منع التنفيذ إذا كان النقر على زر
-            if (e.target.tagName === 'BUTTON') return;
-            const tableNum = box.dataset.table;
-            loadTableFromFirebase(tableNum);
-        });
-    });
-}
     // ========== PAYMENT FUNCTIONS (REPARIERT) ==========
     function payTable(oid) { 
         const order = orders.find(o => o.id == oid); 
