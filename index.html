@@ -1456,21 +1456,24 @@ function openTables() {
             }
             
             html += `
-                <div class="table-box">
+                <div class="table-box" data-table="${tableNum}">
                     <h3>${tableNum === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + tableNum}</h3>
                     <small>🕒 ${timeString}</small>
                     <small>📦 ${batchCount} Bestellung(en)</small>
-                    <div style="margin-top: 10px;" onclick="event.stopPropagation();">
-                        <button onclick="event.stopPropagation(); loadTableFromFirebase('${tableNum}')">Edit</button>
-                        <button onclick="event.stopPropagation(); showOrderFromFirebase('${tableNum}')">Show</button>
-                        <button onclick="event.stopPropagation(); payTableFromFirebase('${tableNum}')" style="background:var(--green);">Pay</button>
-                        <button onclick="event.stopPropagation(); confirmDeleteTableFromFirebase('${tableNum}')" style="background:var(--red);">Löschen</button>
+                    <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                        <button class="edit-table-btn" style="background:var(--blue); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Edit</button>
+                        <button class="show-table-btn" style="background:var(--orange); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Show</button>
+                        <button class="pay-table-btn" style="background:var(--green); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Pay</button>
+                        <button class="delete-table-btn" style="background:var(--red); color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">Löschen</button>
                     </div>
                 </div>
             `;
         });
         
         grid.innerHTML = html;
+        
+        // إعادة ربط الأزرار بعد تحديث HTML
+        attachTableButtons();
         
         // إضافة تأثير بصري عند التحديث
         grid.style.opacity = '0.5';
@@ -1480,21 +1483,58 @@ function openTables() {
     });
 }
 
-// عند إغلاق مودال الطاولات، أوقف الاستماع
-function closeModal(id) { 
-    const modal = document.getElementById(id);
-    if(modal) {
-        modal.style.display = 'none';
-        modal.style.zIndex = '1000';
-        
-        // إذا كان المودال هو modal-tables، أوقف الاستماع
-        if (id === 'modal-tables' && window.tablesListener) {
-            db.ref('active_orders').off('value', window.tablesListener);
-            window.tablesListener = null;
-        }
-    }
+// دالة جديدة لربط الأزرار
+function attachTableButtons() {
+    // أزرار Edit
+    document.querySelectorAll('.edit-table-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tableBox = e.target.closest('.table-box');
+            const tableNum = tableBox.dataset.table;
+            loadTableFromFirebase(tableNum);
+        });
+    });
+    
+    // أزرار Show
+    document.querySelectorAll('.show-table-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tableBox = e.target.closest('.table-box');
+            const tableNum = tableBox.dataset.table;
+            showOrderFromFirebase(tableNum);
+        });
+    });
+    
+    // أزرار Pay
+    document.querySelectorAll('.pay-table-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tableBox = e.target.closest('.table-box');
+            const tableNum = tableBox.dataset.table;
+            payTableFromFirebase(tableNum);
+        });
+    });
+    
+    // أزرار Delete
+    document.querySelectorAll('.delete-table-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const tableBox = e.target.closest('.table-box');
+            const tableNum = tableBox.dataset.table;
+            confirmDeleteTableFromFirebase(tableNum);
+        });
+    });
+    
+    // النقر على الـ table-box نفسه
+    document.querySelectorAll('.table-box').forEach(box => {
+        box.addEventListener('click', (e) => {
+            // منع التنفيذ إذا كان النقر على زر
+            if (e.target.tagName === 'BUTTON') return;
+            const tableNum = box.dataset.table;
+            loadTableFromFirebase(tableNum);
+        });
+    });
 }
-
     // ========== PAYMENT FUNCTIONS (REPARIERT) ==========
     function payTable(oid) { 
         const order = orders.find(o => o.id == oid); 
