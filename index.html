@@ -2204,7 +2204,6 @@ function initiateSend() {
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
 
     init();
-</script>
 // Service Worker registrieren
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -2217,5 +2216,7 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+</script>
+
 </body>
 </html>
