@@ -1524,52 +1524,75 @@
         });
     }
 
-    function openKitchen() {
-        openModal('modal-kitchen');
-        const container = document.getElementById('kitchen-content');
-        container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>";
+function openKitchen() {
+    openModal('modal-kitchen');
+    const container = document.getElementById('kitchen-content');
+    container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>";
 
-        db.ref('active_orders').on('value', (snapshot) => {
-            const allData = snapshot.val();
-            if (!allData) {
-                container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>";
-                return;
-            }
-            let html = "";
-            const now = Date.now();
-            Object.entries(allData).forEach(([tNum, batches]) => {
-                Object.entries(batches).forEach(([bId, batch]) => {
-                    const isLate = (now - batch.batchId) > 300000;
-                    const lateClass = isLate ? "late-blink" : "";
-                    html += `
-                        <div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')">
-                            <div class="card-header-pos">
-                                <b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${tNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + tNum}</b>
-                                <b style="color:#2980b9;">🕒 ${batch.time || ''}</b>
-                            </div>
-                            <div style="flex-grow: 1;">
-                                ${batch.items ? batch.items.map(i => `
-                                    <div style="border-bottom:1px solid #f0f0f0; padding:8px 0;">
-                                        <div style="font-size:1.1rem; font-weight:bold;">
-                                            ${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span>
-                                        </div>
-                                        <div style="font-size:0.85rem; color:#666;">
-                                            ${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}
-                                        </div>
-                                        ${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}
-                                    </div>
-                                `).join('') : 'Keine Items'}
-                            </div>
-                            <button class="btn-main" style="background:#27ae60; margin-top:10px;" 
-                                    onclick="event.stopPropagation(); finishOrder('${tNum}', '${bId}')">
-                                FERTIG
-                            </button>
-                        </div>`;
+    db.ref('active_orders').on('value', (snapshot) => {
+        const allData = snapshot.val();
+        if (!allData) {
+            container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>";
+            return;
+        }
+        
+        // ========== التعديل هنا: جمع كل الطلبات وترتيبها ==========
+        let allOrders = [];
+        
+        Object.entries(allData).forEach(([tNum, batches]) => {
+            Object.entries(batches).forEach(([bId, batch]) => {
+                // إضافة معلومات الوقت والطاولة لكل طلب
+                allOrders.push({
+                    tableNum: tNum,
+                    batchId: bId,
+                    time: batch.time || '',
+                    timestamp: batch.batchId || 0, // استخدام batchId كـ timestamp
+                    items: batch.items || [],
+                    isLate: (Date.now() - (batch.batchId || 0)) > 300000
                 });
             });
-            container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
         });
-    }
+        
+        // ترتيب الطلبات: الأحدث أولاً (حسب timestamp)
+        allOrders.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // عرض الطلبات المرتبة
+        let html = "";
+        const now = Date.now();
+        
+        allOrders.forEach(order => {
+            const lateClass = order.isLate ? "late-blink" : "";
+            html += `
+                <div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')">
+                    <div class="card-header-pos">
+                        <b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">
+                            ${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}
+                        </b>
+                        <b style="color:#2980b9;">🕒 ${order.time || ''}</b>
+                    </div>
+                    <div style="flex-grow: 1;">
+                        ${order.items ? order.items.map(i => `
+                            <div style="border-bottom:1px solid #f0f0f0; padding:8px 0;">
+                                <div style="font-size:1.1rem; font-weight:bold;">
+                                    ${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span>
+                                </div>
+                                <div style="font-size:0.85rem; color:#666;">
+                                    ${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}
+                                </div>
+                                ${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}
+                            </div>
+                        `).join('') : 'Keine Items'}
+                    </div>
+                    <button class="btn-main" style="background:#27ae60; margin-top:10px;" 
+                            onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">
+                        FERTIG
+                    </button>
+                </div>`;
+        });
+        
+        container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
+    });
+}
 
     function showOrder(tableId) {
         const order = orders.find(o => o.table == tableId && o.status === 'open');
