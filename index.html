@@ -67,7 +67,7 @@
         }
         .grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
             gap: 2vh 2vw; 
             margin-bottom: 2vh; 
         }
@@ -80,15 +80,35 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
             font-weight: bold;
             transition: transform 0.1s; 
-            min-height: 80px; 
             display: flex; 
             flex-direction: column; 
-            justify-content: center;
+            justify-content: space-between;
+            gap: 8px;
             font-size: clamp(0.85rem, 2.5vh, 1.1rem);
         }
-        .card:active { transform: scale(0.95); }
+        .card:active { transform: scale(0.98); }
         .cat-card { background: var(--blue); color: white; border: none; }
-        .prod-card { border-bottom: 5px solid var(--green); }
+        .prod-card { border-bottom: 5px solid var(--green); cursor: pointer; }
+        .prod-price {
+            font-size: 1.1rem;
+            color: var(--green);
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .recipe-btn {
+            background: var(--orange);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        .recipe-btn:active { background: #e67e22; transform: scale(0.97); }
 
         #cart-container { 
             flex: 1; 
@@ -108,36 +128,78 @@
         }
         .cart-item { 
             border: 1px solid #ddd; 
-            padding: 1.5vh 2vw; 
-            margin-bottom: 1vh; 
+            padding: 1vh 2vw; 
+            margin-bottom: 0.8vh; 
             border-radius: 10px;
-            position: relative; 
-            transition: all 0.3s; 
-            font-size: clamp(0.8rem, 2vh, 1rem);
+            transition: all 0.2s; 
+            font-size: clamp(0.8rem, 2vh, 0.95rem);
         }
         .cart-item.locked { background: #f8f9fa; color: #95a5a6; border-left: 5px solid var(--gray); }
-        .cart-item.new { background: #fff; border-left: 5px solid var(--blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .cart-item.new { background: #fff; border-left: 5px solid var(--blue); }
         
+        .cart-item-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .cart-item-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+            flex: 2;
+            min-width: 100px;
+        }
+        .cart-item-prices {
+            display: flex;
+            gap: 12px;
+            font-size: 0.85rem;
+        }
+        .cart-item-unit-price { color: var(--blue); }
+        .cart-item-total-price { color: var(--green); font-weight: bold; }
+        .cart-item-quantity {
+            color: var(--orange);
+            font-weight: bold;
+            background: #fef5e8;
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
         .action-btns { 
             display: flex; 
-            gap: 1vw; 
-            margin-top: 1vh; 
+            gap: 6px; 
+            margin-top: 8px; 
             flex-wrap: wrap; 
+            justify-content: flex-start;
         }
         .btn-sm { 
             border: none; 
-            padding: 1vh 0; 
-            border-radius: 5px; 
+            padding: 5px 12px; 
+            border-radius: 20px; 
             color: white; 
-            font-size: clamp(0.7rem, 2vh, 0.9rem); 
+            font-size: 0.75rem; 
             cursor: pointer; 
             font-weight: bold; 
-            flex: 1 1 40px;
-            min-width: 40px;
+            min-width: 45px;
         }
-        .btn-extra { background: var(--orange); }
-        .btn-note { background: var(--blue); }
-        .btn-del { background: var(--red); }
+        .btn-sm-qty { background: var(--green); }
+        .btn-sm-qty-minus { background: var(--orange); }
+        .btn-sm-extra { background: var(--orange); }
+        .btn-sm-note { background: var(--blue); }
+        .btn-sm-del { background: var(--red); }
+        
+        .cart-item-extras { font-size: 0.7rem; color: var(--blue); margin-top: 4px; padding-left: 5px; }
+        .cart-item-note { color: var(--red); font-size: 0.7rem; margin-top: 4px; padding-left: 5px; }
+
+        .cart-total-bar {
+            background: var(--dark);
+            color: white;
+            padding: 1.5vh 2vw;
+            border-radius: 10px;
+            text-align: center;
+            font-size: clamp(1.2rem, 3vh, 1.6rem);
+            font-weight: bold;
+            margin-top: 1vh;
+        }
 
         .modal { 
             display: none; 
@@ -145,79 +207,151 @@
             top: 0; left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0,0,0,0.8); 
+            background: rgba(0,0,0,0.7); 
             z-index: 1000; 
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch; 
+            backdrop-filter: blur(3px);
         }
         .modal-content { 
             background: white; 
             width: 90%; 
-            max-width: 800px; 
-            margin: 5vh auto; 
-            padding: 3vh 4vw; 
-            border-radius: 15px; 
+            max-width: 500px; 
+            margin: 10vh auto; 
+            padding: 2rem; 
+            border-radius: 20px; 
             max-height: 80vh; 
             overflow-y: auto; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
         }
         .close { 
-            float: right; 
-            font-size: 40px; 
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 32px; 
             font-weight: bold;
-            line-height: 1;
             cursor: pointer; 
             color: var(--red); 
             background: none;
             border: none;
-            padding: 0 10px;
             transition: color 0.2s;
         }
         .close:hover { color: #ff6b6b; }
 
-        /* تكبير كروت الطاولات */
-        .table-box { 
-            background: var(--orange); 
-            color: white; 
-            padding: 3vh 2vw; 
-            border-radius: 20px; 
-            text-align: center; 
-            cursor: pointer; 
-            font-size: clamp(1.2rem, 3vh, 1.8rem); 
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
         }
-        .table-box small {
-            font-size: 0.7em;
-            display: block;
-            margin-top: 5px;
-            color: #ffe082;
-        }
-        .table-box button {
-            font-size: 0.6em;
-            padding: 5px;
-            margin: 2px;
+        .table-btn {
+            padding: 15px 0;
+            background: var(--blue);
+            color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        .table-btn.selected { background: var(--green); transform: scale(1.05); box-shadow: 0 0 0 3px rgba(39,174,96,0.3); }
+        .selected-display {
+            text-align: center;
+            font-size: 1.3rem;
+            padding: 12px;
+            background: var(--light);
+            border-radius: 12px;
+            margin: 10px 0;
             font-weight: bold;
         }
-        
-        .btn-main { 
-            width: 100%; 
-            padding: 2vh 2vw; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: clamp(1rem, 3vh, 1.4rem); 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 1vh; 
-            color: white; 
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .modal-footer button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-confirm { background: var(--green); }
+        .btn-cancel { background: var(--red); }
+
+        #extras-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        #extras-grid .card {
+            cursor: pointer;
+            background: var(--blue);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 12px;
         }
 
-        /* Kitchen Modal */
+        #modal-confirm .modal-content { text-align: center; max-width: 350px; }
+        .confirm-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
+        .confirm-actions button { padding: 12px 24px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; }
+        
+        .extra-type-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .extra-type-btn {
+            padding: 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        .extra-type-btn.extras { background: var(--orange); }
+        .extra-type-btn.zutaten { background: var(--blue); }
+
+        #modal-recipe-view .modal-content {
+            max-width: 700px;
+            background: #fef9e6;
+        }
+        .recipe-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark);
+            border-bottom: 3px solid var(--orange);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .recipe-section { margin-bottom: 1.5rem; }
+        .recipe-section h3 {
+            font-size: 1.3rem;
+            color: var(--blue);
+            border-left: 5px solid var(--orange);
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .recipe-ingredients, .recipe-instructions {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .recipe-empty { color: var(--gray); font-style: italic; text-align: center; padding: 1rem; }
+
         #modal-kitchen .modal-content {
             background: #000 !important;
             width: 100% !important;
@@ -228,7 +362,6 @@
             padding: 2vh 4vw !important;
             color: white;
         }
-
         .kitchen-order-card {
             background: white;
             color: #333;
@@ -240,22 +373,19 @@
             box-shadow: 0 4px 10px rgba(255,255,255,0.1);
             min-height: 200px;
         }
-
         .late-blink { animation: kitchen-blink 1s infinite; }
         @keyframes kitchen-blink {
             0% { border-color: transparent; }
             50% { border-color: #ff3b30; }
             100% { border-color: transparent; }
         }
-
         .card-header-pos {
             display: flex;
             justify-content: space-between;
             border-bottom: 2px solid #eee;
             padding-bottom: 1vh;
             margin-bottom: 1vh;
-        }    
-
+        }
         .expanded-order {
             min-height: fit-content !important;
             z-index: 100;
@@ -264,19 +394,16 @@
             transition: all 0.3s ease;
         }
 
-        /* Admin Fullscreen - new layout */
         #modal-admin .modal-content {
             width: 100% !important;
             height: 100dvh !important;
             max-width: 100% !important;
-            margin: 0 !important;
             border-radius: 0 !important;
             background: #f5f7fa;
             padding: 0;
             display: flex;
             flex-direction: column;
         }
-
         .admin-header {
             padding: 2vh 4vw;
             border-bottom: 2px solid #ddd;
@@ -285,14 +412,14 @@
             justify-content: space-between;
             align-items: center;
         }
-        .admin-header h1 {
-            font-size: clamp(1.5rem, 4vh, 2.5rem);
-            margin: 0;
-        }
+        .admin-header h1 { font-size: clamp(1.5rem, 4vh, 2.5rem); margin: 0; }
         .admin-tabs {
             display: flex;
             gap: 2vw;
             flex-wrap: wrap;
+            padding: 1vh 2vw;
+            background: white;
+            border-bottom: 1px solid #ddd;
         }
         .admin-tab-btn {
             padding: 1.5vh 2vw;
@@ -302,82 +429,43 @@
             font-size: clamp(0.9rem, 2vh, 1.2rem);
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
-            white-space: nowrap;
         }
-        .admin-tab-btn.active {
-            background: var(--blue);
-            color: white;
-        }
-        .admin-tab-btn:hover {
-            background: var(--gray);
-            color: white;
-        }
-
+        .admin-tab-btn.active { background: var(--blue); color: white; }
         .admin-body {
             flex: 1;
             overflow-y: auto;
             padding: 3vh 4vw;
             background: #f5f7fa;
         }
-
-        .admin-section {
-            display: none;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .admin-section.active {
-            display: block;
-        }
-
+        .admin-section { display: none; max-width: 1200px; margin: 0 auto; }
+        .admin-section.active { display: block; }
         .admin-section .admin-card {
             background: white;
             border-radius: 12px;
             padding: 3vh 3vw;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .admin-section .admin-list {
-            max-height: 50vh;
-            overflow-y: auto;
-            margin-top: 2vh;
-        }
-
-        /* تحسين تصميم العناصر: تقريب الأزرار وإضافة ألوان متبادلة */
+        .admin-list { max-height: 50vh; overflow-y: auto; margin-top: 2vh; }
         .admin-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1vh 1.5vw; /* تقليل padding */
+            padding: 1vh 1.5vw;
             background: #ffffff;
             border-radius: 6px;
             margin-bottom: 0.5vh;
-            font-size: clamp(0.85rem, 2vh, 1rem);
         }
-        .admin-item:nth-child(even) {
-            background: #f2f2f2; /* رمادي فاتح للصفوف الزوجية */
-        }
-
-        .admin-item-actions {
-            display: flex;
-            gap: 0.5vw; /* تقليل المسافة بين الأزرار */
-            align-items: center;
-        }
-
+        .admin-item:nth-child(even) { background: #f2f2f2; }
+        .admin-item-actions { display: flex; gap: 0.5vw; align-items: center; }
         .admin-item-actions button {
-            padding: 0.5vh 1vw; /* أزرار أصغر */
+            padding: 0.5vh 1vw;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             color: white;
             font-size: 0.8rem;
-            min-width: 28px; /* تصغير العرض الأدنى */
-            height: 4vh;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            min-width: 28px;
         }
-
         .btn-up { background: var(--green); }
         .btn-down { background: var(--orange); }
         .btn-edit { background: var(--blue); }
@@ -389,15 +477,14 @@
             margin-bottom: 2vh;
             flex-wrap: wrap;
         }
-
-        .input-group input, .input-group select {
+        .input-group input, .input-group select, .input-group textarea {
             flex: 1 1 140px;
             padding: 1.5vh 1.5vw;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
         }
-
+        .input-group textarea { flex: 2 1 300px; min-height: 80px; }
         .input-group button {
             padding: 1.5vh 3vw;
             background: var(--green);
@@ -406,268 +493,37 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1rem;
         }
 
-        /* Login Modal */
-        #modal-login .modal-content {
-            max-width: 400px;
-            text-align: center;
-        }
+        #modal-login .modal-content { max-width: 400px; text-align: center; }
         .pin-pad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 2vw;
-            margin: 2vh 0;
+            gap: 12px;
+            margin: 20px 0;
         }
         .pin-btn {
-            padding: 2vh 0;
-            font-size: 2rem;
+            padding: 15px 0;
+            font-size: 1.8rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             background: var(--blue);
             color: white;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        .pin-btn:hover {
-            background: var(--green);
         }
         .pin-display {
-            font-size: 2rem;
+            font-size: 1.8rem;
             letter-spacing: 0.5rem;
-            padding: 1vh;
+            padding: 10px;
             background: #eee;
-            border-radius: 10px;
-            margin-bottom: 2vh;
+            border-radius: 12px;
+            margin-bottom: 15px;
         }
-        .pin-footer {
-            display: flex;
-            gap: 2vw;
-            margin-top: 2vh;
-        }
-        .pin-footer button {
-            flex: 1;
-            padding: 1.5vh;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-        }
+        .pin-footer { display: flex; gap: 12px; margin-top: 15px; }
+        .pin-footer button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; }
         .btn-clear { background: var(--red); }
         .btn-ok { background: var(--green); }
 
-        /* Stats Modal */
-        #modal-stats .modal-content {
-            max-width: 900px;
-        }
-        .stats-header {
-            display: flex;
-            gap: 2vw;
-            margin-bottom: 2vh;
-            flex-wrap: wrap;
-        }
-        .stats-header select, .stats-header input {
-            padding: 1.5vh 2vw;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .stats-summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2vw;
-            margin-bottom: 3vh;
-        }
-        .stat-card {
-            background: var(--blue);
-            color: white;
-            padding: 2vh;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .stat-card h3 {
-            font-size: 1rem;
-            margin-bottom: 1vh;
-        }
-        .stat-card .value {
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        .stats-tabs {
-            display: flex;
-            gap: 2vw;
-            margin-bottom: 2vh;
-        }
-        .stats-tab-btn {
-            padding: 1vh 2vw;
-            border: none;
-            border-radius: 8px;
-            background: var(--light);
-            cursor: pointer;
-        }
-        .stats-tab-btn.active {
-            background: var(--blue);
-            color: white;
-        }
-        .stats-table {
-            max-height: 40vh;
-            overflow-y: auto;
-        }
-        .stats-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .stats-table th {
-            background: var(--dark);
-            color: white;
-            padding: 1vh;
-            position: sticky;
-            top: 0;
-        }
-        .stats-table td {
-            padding: 1vh;
-            border-bottom: 1px solid #ddd;
-        }
-        .stats-table tr:nth-child(even) {
-            background: #f2f2f2;
-        }
-
-        /* Table Grid Modal */
-        #modal-table-grid .modal-content { max-width: 600px; }
-        .table-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 2vw;
-            margin: 2vh 0;
-        }
-        .table-btn {
-            padding: 2vh 1vw;
-            background: var(--blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: clamp(1rem, 3vh, 1.5rem);
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .table-btn.selected { background: var(--green); transform: scale(1.05); box-shadow: 0 0 0 3px rgba(39,174,96,0.3); }
-
-        .modal-footer {
-            display: flex;
-            gap: 2vw;
-            margin-top: 2vh;
-        }
-        .modal-footer button {
-            flex: 1;
-            padding: 2vh 2vw;
-            border: none;
-            border-radius: 8px;
-            font-size: clamp(0.9rem, 2.5vh, 1.2rem);
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-        }
-        .btn-confirm { background: var(--green); }
-        .btn-cancel { background: var(--red); }
-
-        .selected-display {
-            text-align: center;
-            font-size: clamp(1.2rem, 3vh, 2rem);
-            padding: 1vh;
-            background: var(--light);
-            border-radius: 8px;
-            margin: 1vh 0;
-        }
-
-        /* Show Order Modal */
-        .order-items { max-height: 40vh; overflow-y: auto; margin: 2vh 0; }
-        .order-item-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 1vh 0;
-            border-bottom: 1px solid #eee;
-            font-size: clamp(0.9rem, 2.5vh, 1.2rem);
-        }
-        .order-total {
-            font-size: clamp(1.5rem, 4vh, 2.5rem);
-            font-weight: bold;
-            text-align: right;
-            padding: 2vh;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin: 2vh 0;
-        }
-
-        /* Confirm Modal */
-        #modal-confirm .modal-content { max-width: 400px; text-align: center; }
-        .confirm-actions {
-            display: flex;
-            gap: 2vw;
-            margin-top: 2vh;
-        }
-        .confirm-actions button {
-            flex: 1;
-            padding: 2vh 2vw;
-            border: none;
-            border-radius: 8px;
-            font-size: clamp(1rem, 2.5vh, 1.3rem);
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-        }
-
-        /* Edit Modal */
-        #modal-edit .modal-content { max-width: 400px; }
-        #edit-input, #edit-price {
-            width: 100%;
-            padding: 1.5vh 2vw;
-            margin: 1vh 0;
-            border: 2px solid var(--blue);
-            border-radius: 8px;
-            font-size: 1.2rem;
-        }
-        .edit-actions {
-            display: flex;
-            gap: 2vw;
-            margin-top: 1vh;
-        }
-        .edit-actions button {
-            flex: 1;
-            padding: 2vh 2vw;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-        }
-
-        .extra-type-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2vw;
-            margin: 2vh 0;
-        }
-        .extra-type-btn {
-            padding: 3vh 2vw;
-            font-size: clamp(1.2rem, 3vh, 2rem);
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-        }
-        .extra-type-btn.extras { background: var(--orange); }
-        .extra-type-btn.zutaten { background: var(--blue); }
-
-        @media (orientation: landscape) {
-            header { height: 15vh; }
-        }
-
-        /* رسالة مؤقتة (toast) */
         .toast-message {
             position: fixed;
             bottom: 20px;
@@ -683,11 +539,7 @@
             transition: opacity 0.3s;
             pointer-events: none;
         }
-        .toast-message.show {
-            opacity: 1;
-        }
-
-        /* تحسين زر alles löschen على الأجهزة اللوحية */
+        .toast-message.show { opacity: 1; }
         .clear-cart-btn {
             background: var(--red);
             color: white;
@@ -696,8 +548,69 @@
             border-radius: 5px;
             font-size: clamp(0.6rem, 2vh, 0.9rem);
             font-weight: bold;
-            white-space: nowrap;
         }
+        .btn-main { 
+            width: 100%; 
+            padding: 2vh 2vw; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: clamp(1rem, 3vh, 1.4rem); 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 1vh; 
+            color: white; 
+        }
+        .table-box { 
+            background: var(--orange); 
+            color: white; 
+            padding: 3vh 2vw; 
+            border-radius: 20px; 
+            text-align: center; 
+            cursor: pointer; 
+            font-size: clamp(1.2rem, 3vh, 1.8rem); 
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .table-box button {
+            font-size: 0.6em;
+            padding: 5px;
+            margin: 2px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2vw;
+            margin-bottom: 3vh;
+        }
+        .stat-card {
+            background: var(--blue);
+            color: white;
+            padding: 2vh;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stats-tabs { display: flex; gap: 2vw; margin-bottom: 2vh; }
+        .stats-tab-btn {
+            padding: 1vh 2vw;
+            border: none;
+            border-radius: 8px;
+            background: var(--light);
+            cursor: pointer;
+        }
+        .stats-tab-btn.active { background: var(--blue); color: white; }
+        .stats-table { max-height: 40vh; overflow-y: auto; }
+        .stats-table table { width: 100%; border-collapse: collapse; }
+        .stats-table th { background: var(--dark); color: white; padding: 1vh; position: sticky; top: 0; }
+        .stats-table td { padding: 1vh; border-bottom: 1px solid #ddd; }
+
+        @media (orientation: landscape) { header { height: 15vh; } }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -731,16 +644,35 @@
             <button onclick="clearFullCart()" class="clear-cart-btn">ALLES LÖSCHEN</button>
         </div>
         <div id="cart-list" class="cart-items"></div>
+        <div id="cart-total-bar" class="cart-total-bar">0.00 €</div>
         <div style="border-top: 4px solid var(--dark); padding-top: 1vh;">
             <button class="btn-main" style="background:var(--green)" onclick="initiateSend()">BESTELLUNG SENDEN</button>
         </div>
     </section>
 </main>
 
+<!-- Recipe View Modal -->
+<div id="modal-recipe-view" class="modal">
+    <div class="modal-content">
+        <button class="close" onclick="closeModal('modal-recipe-view')">&times;</button>
+        <div id="recipe-content">
+            <div class="recipe-title" id="recipe-title">...</div>
+            <div class="recipe-section">
+                <h3>📋 Zutaten</h3>
+                <div class="recipe-ingredients" id="recipe-ingredients">-</div>
+            </div>
+            <div class="recipe-section">
+                <h3>👨‍🍳 Zubereitung</h3>
+                <div class="recipe-instructions" id="recipe-instructions">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Login Modal -->
 <div id="modal-login" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-login')">&times;</span>
+        <button class="close" onclick="closeModal('modal-login')">&times;</button>
         <h2>Admin Login</h2>
         <div class="pin-display" id="pin-display"></div>
         <div class="pin-pad" id="pin-pad"></div>
@@ -751,14 +683,12 @@
     </div>
 </div>
 
-<!-- Admin Modal (Fullscreen) -->
+<!-- Admin Modal -->
 <div id="modal-admin" class="modal">
     <div class="modal-content">
         <div class="admin-header">
             <h1>Admin Management</h1>
-            <div>
-                <button class="close" onclick="closeModal('modal-admin')">&times;</button>
-            </div>
+            <button class="close" onclick="closeModal('modal-admin')">&times;</button>
         </div>
         <div class="admin-tabs">
             <button class="admin-tab-btn active" data-tab="categories">Kategorien</button>
@@ -767,7 +697,6 @@
             <button class="admin-tab-btn" data-tab="zutaten">Zutaten</button>
         </div>
         <div class="admin-body">
-            <!-- Categories Section -->
             <div id="admin-categories-section" class="admin-section active">
                 <div class="admin-card">
                     <h3>Kategorien verwalten</h3>
@@ -778,7 +707,6 @@
                     <div class="admin-list" id="admin-cat-list"></div>
                 </div>
             </div>
-            <!-- Products Section -->
             <div id="admin-products-section" class="admin-section">
                 <div class="admin-card">
                     <h3>Produkte verwalten</h3>
@@ -795,7 +723,6 @@
                     <div class="admin-list" id="admin-product-list"></div>
                 </div>
             </div>
-            <!-- Extras Section -->
             <div id="admin-extras-section" class="admin-section">
                 <div class="admin-card">
                     <h3>Extras verwalten</h3>
@@ -807,7 +734,6 @@
                     <div class="admin-list" id="admin-ex-list"></div>
                 </div>
             </div>
-            <!-- Zutaten Section -->
             <div id="admin-zutaten-section" class="admin-section">
                 <div class="admin-card">
                     <h3>Zutaten verwalten</h3>
@@ -826,7 +752,7 @@
 <!-- Stats Modal -->
 <div id="modal-stats" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-stats')">&times;</span>
+        <button class="close" onclick="closeModal('modal-stats')">&times;</button>
         <h2>Statistiken & Berichte</h2>
         <div class="stats-header">
             <select id="stats-period" onchange="onStatsPeriodChange()">
@@ -840,65 +766,24 @@
             <input type="date" id="stats-to" style="display:none;" onchange="loadStats()">
         </div>
         <div class="stats-summary">
-            <div class="stat-card">
-                <h3>Gesamtumsatz</h3>
-                <div class="value" id="stats-total">0.00 €</div>
-            </div>
-            <div class="stat-card">
-                <h3>Anzahl Bestellungen</h3>
-                <div class="value" id="stats-count">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Durchschnitt</h3>
-                <div class="value" id="stats-avg">0.00 €</div>
-            </div>
-            <div class="stat-card">
-                <h3>Anzahl Artikel</h3>
-                <div class="value" id="stats-items">0</div>
-            </div>
+            <div class="stat-card"><h3>Gesamtumsatz</h3><div class="value" id="stats-total">0.00 €</div></div>
+            <div class="stat-card"><h3>Anzahl Bestellungen</h3><div class="value" id="stats-count">0</div></div>
+            <div class="stat-card"><h3>Durchschnitt</h3><div class="value" id="stats-avg">0.00 €</div></div>
+            <div class="stat-card"><h3>Anzahl Artikel</h3><div class="value" id="stats-items">0</div></div>
         </div>
         <div class="stats-tabs">
             <button class="stats-tab-btn active" onclick="switchStatsTab('orders')">Bestellungen</button>
             <button class="stats-tab-btn" onclick="switchStatsTab('products')">Produkte</button>
         </div>
-        <div id="stats-orders-section">
-            <div class="stats-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Datum</th>
-                            <th>Uhrzeit</th>
-                            <th>Tisch</th>
-                            <th>Artikel</th>
-                            <th>Betrag</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stats-orders-list"></tbody>
-                </table>
-            </div>
-        </div>
-        <div id="stats-products-section" style="display:none;">
-            <div class="stats-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Produkt</th>
-                            <th>Menge</th>
-                            <th>Umsatz</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stats-products-list"></tbody>
-                </table>
-            </div>
-        </div>
+        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></table></div></div>
+        <div id="stats-products-section" style="display:none;"><div class="stats-table"><table><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></table></div></div>
     </div>
 </div>
 
 <!-- Table Grid Modal -->
 <div id="modal-table-grid" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-table-grid')">&times;</span>
+        <button class="close" onclick="closeModal('modal-table-grid')">&times;</button>
         <h2 style="text-align: center;">Tisch auswählen</h2>
         <div id="selected-table-display" class="selected-display">Kein Tisch gewählt</div>
         <div class="table-grid" id="table-grid"></div>
@@ -911,23 +796,12 @@
 </div>
 
 <!-- Show Order Modal -->
-<div id="modal-show-order" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-show-order'); return false;">&times;</span>
-        <h2 id="show-order-title" style="text-align: center;">Bestellung</h2>
-        <div id="show-order-items" class="order-items"></div>
-        <div id="show-order-total" class="order-total">0.00 €</div>
-        <div style="display: flex; gap: 2vw;">
-            <button class="btn-main" style="background: var(--red); margin:0;" onclick="confirmDeleteTable()">Tisch löschen</button>
-            <button class="btn-main" style="background: var(--blue); margin:0;" onclick="closeModal('modal-show-order'); return false;">Schließen</button>
-        </div>
-    </div>
-</div>
+<div id="modal-show-order" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-show-order'); return false;">&times;</button><h2 id="show-order-title" style="text-align: center;">Bestellung</h2><div id="show-order-items" class="order-items"></div><div id="show-order-total" class="order-total">0.00 €</div><div style="display: flex; gap: 2vw;"><button class="btn-main" style="background: var(--red); margin:0;" onclick="confirmDeleteTable()">Tisch löschen</button><button class="btn-main" style="background: var(--blue); margin:0;" onclick="closeModal('modal-show-order'); return false;">Schließen</button></div></div></div>
 
 <!-- Confirm Modal -->
 <div id="modal-confirm" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-confirm')">&times;</span>
+        <button class="close" onclick="closeModal('modal-confirm')">&times;</button>
         <h3 id="confirm-message" style="margin: 2vh 0;">Sind Sie sicher?</h3>
         <div class="confirm-actions">
             <button class="btn-confirm" onclick="executeConfirm()">Ja</button>
@@ -939,13 +813,15 @@
 <!-- Edit Modal -->
 <div id="modal-edit" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-edit')">&times;</span>
+        <button class="close" onclick="closeModal('modal-edit')">&times;</button>
         <h3 id="edit-title">Bearbeiten</h3>
-        <input type="text" id="edit-input" placeholder="Name">
-        <input type="number" id="edit-price" placeholder="Preis" style="display:none;">
-        <div class="edit-actions">
-            <button class="btn-confirm" onclick="saveEdit()">Speichern</button>
-            <button class="btn-cancel" onclick="closeModal('modal-edit')">Abbrechen</button>
+        <input type="text" id="edit-input" placeholder="Name" style="width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd;">
+        <input type="number" id="edit-price" placeholder="Preis" style="display:none; width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd;">
+        <textarea id="edit-recipe-ingredients" placeholder="Zutaten (z.B. 200g Mehl, 100g Zucker...)" rows="4" style="display:none; width:100%; margin:10px 0; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
+        <textarea id="edit-recipe-instructions" placeholder="Zubereitung (z.B. Backofen vorheizen, Teig kneten...)" rows="6" style="display:none; width:100%; margin:10px 0; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
+        <div class="edit-actions" style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-confirm" onclick="saveEdit()" style="flex:1; padding:12px; background:var(--green); color:white; border:none; border-radius:8px; font-weight:bold;">Speichern</button>
+            <button class="btn-cancel" onclick="closeModal('modal-edit')" style="flex:1; padding:12px; background:var(--red); color:white; border:none; border-radius:8px; font-weight:bold;">Abbrechen</button>
         </div>
     </div>
 </div>
@@ -953,7 +829,7 @@
 <!-- Extra Type Selector Modal -->
 <div id="modal-extra-type" class="modal">
     <div class="modal-content" style="max-width:400px; text-align:center;">
-        <span class="close" onclick="closeModal('modal-extra-type')">&times;</span>
+        <button class="close" onclick="closeModal('modal-extra-type')">&times;</button>
         <h2>Wähle Extra-Typ</h2>
         <div class="extra-type-grid">
             <button class="extra-type-btn extras" onclick="selectExtraType('extras')">Extras</button>
@@ -963,66 +839,25 @@
 </div>
 
 <!-- Kitchen Modal -->
-<div id="modal-kitchen" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-kitchen')">&times;</span>
-        <h1>KÜCHE - BESTELLUNGEN</h1>
-        <div id="kitchen-content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;"></div>
-    </div>
-</div>
+<div id="modal-kitchen" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-kitchen')">&times;</button><h1>KÜCHE - BESTELLUNGEN</h1><div id="kitchen-content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;"></div></div></div>
 
-<!-- Tables Modal (active tables) -->
-<div id="modal-tables" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-tables'); return false;">&times;</span>
-        <h2>AKTIVE TISCHE</h2>
-        <div id="tables-grid" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div>
-        <div style="margin-top: 2vh; text-align: center;">
-            <button class="btn-main" style="background: var(--blue); width: auto; padding: 1vh 4vw;" onclick="closeModal('modal-tables')">Schließen</button>
-        </div>
-    </div>
-</div>
+<!-- Tables Modal -->
+<div id="modal-tables" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-tables'); return false;">&times;</button><h2>AKTIVE TISCHE</h2><div id="tables-grid" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div><div style="margin-top: 2vh; text-align: center;"><button class="btn-main" style="background: var(--blue); width: auto; padding: 1vh 4vw;" onclick="closeModal('modal-tables')">Schließen</button></div></div></div>
 
 <!-- Extras Modal -->
 <div id="modal-extras" class="modal">
     <div class="modal-content" style="max-width:400px">
-        <span class="close" onclick="closeModal('modal-extras')">&times;</span>
+        <button class="close" onclick="closeModal('modal-extras')">&times;</button>
         <h3 id="extras-modal-title">Extras wählen</h3>
-        <div id="extras-grid" class="grid" style="grid-template-columns: 1fr 1fr;"></div>
+        <div id="extras-grid"></div>
     </div>
 </div>
 
 <!-- Pay Modal -->
-<div id="modal-pay" class="modal">
-    <div class="modal-content" style="max-width:400px; text-align:center">
-        <span class="close" onclick="closeModal('modal-pay')">&times;</span>
-        <h2 id="pay-title">Zahlung</h2>
-        <h1 id="pay-amount" style="font-size:50px">0.00 €</h1>
-        <button class="btn-main" style="background:var(--green)" onclick="processPay('Bar')">BAR</button>
-        <button class="btn-main" style="background:var(--blue)" onclick="processPay('Karte')">KARTE</button>
-    </div>
-</div>
+<div id="modal-pay" class="modal"><div class="modal-content" style="max-width:400px; text-align:center"><button class="close" onclick="closeModal('modal-pay')">&times;</button><h2 id="pay-title">Zahlung</h2><h1 id="pay-amount" style="font-size:50px">0.00 €</h1><button class="btn-main" style="background:var(--green)" onclick="processPay('Bar')">BAR</button><button class="btn-main" style="background:var(--blue)" onclick="processPay('Karte')">KARTE</button></div></div>
 
 <!-- Note Modal -->
-<div id="modal-note" class="modal">
-    <div class="modal-content" style="max-width:400px; text-align:center; border: 2px solid var(--blue);">
-        <span class="close" onclick="closeModal('modal-note')">&times;</span>
-        <h3>Notiz für <span id="note-item-name"></span></h3>
-        <textarea id="note-text-input" rows="4" 
-            style="width:100%; padding:2vh; border-radius:10px; border:1px solid #ccc; font-size:clamp(1rem,2.5vh,1.2rem); margin-bottom:2vh;" 
-            placeholder="Schreiben Sie hier..."></textarea>
-        <button class="btn-main" style="background:var(--green)" onclick="saveNote()">SPEICHERN</button>
-    </div>
-</div>
-
-<!-- Table Input Modal (hidden) -->
-<div id="modal-table-input" class="modal" style="display:none;">
-    <div class="modal-content" style="max-width:300px; text-align:center">
-        <h2>Tischnummer?</h2>
-        <input type="number" id="input-t-num" style="font-size:40px; text-align:center; width:100%">
-        <button class="btn-main" style="background:var(--green)" onclick="confirmOrder()">SENDEN</button>
-    </div>
-</div>
+<div id="modal-note" class="modal"><div class="modal-content" style="max-width:400px; text-align:center;"><button class="close" onclick="closeModal('modal-note')">&times;</button><h3>Notiz für <span id="note-item-name"></span></h3><textarea id="note-text-input" rows="4" style="width:100%; padding:2vh; border-radius:10px; border:1px solid #ccc; font-size:clamp(1rem,2.5vh,1.2rem); margin-bottom:2vh;" placeholder="Schreiben Sie hier..."></textarea><button class="btn-main" style="background:var(--green)" onclick="saveNote()">SPEICHERN</button></div></div>
 
 <script>
     // ========== FIREBASE CONFIG ==========
@@ -1039,42 +874,15 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ========== SOUND URLs ==========
     const KITCHEN_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
     const WAITER_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3';
 
-    // ========== GLOBALE SOUND-FUNKTION ==========
-    function playSound(url) {
-        const audio = new Audio(url);
-        audio.play().catch(e => console.log('Audio play failed:', e));
-    }
+    function playSound(url) { const audio = new Audio(url); audio.play().catch(e => console.log('Audio play failed:', e)); }
+    function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
 
-    // ========== TOAST FUNKTION ==========
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2000);
-    }
+    db.ref('notifications/waiter').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(WAITER_SOUND_URL); });
+    db.ref('notifications/kitchen').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(KITCHEN_SOUND_URL); });
 
-    // ========== FIREBASE NOTIFICATION LISTENERS ==========
-    db.ref('notifications/waiter').on('value', (snapshot) => {
-        const val = snapshot.val();
-        if (val && val.timestamp) {
-            playSound(WAITER_SOUND_URL);
-        }
-    });
-
-    db.ref('notifications/kitchen').on('value', (snapshot) => {
-        const val = snapshot.val();
-        if (val && val.timestamp) {
-            playSound(KITCHEN_SOUND_URL);
-        }
-    });
-
-    // ========== DATA ==========
     let categories = JSON.parse(localStorage.getItem('cats')) || [];
     let products = JSON.parse(localStorage.getItem('prods')) || [];
     let extras = JSON.parse(localStorage.getItem('extras')) || [];
@@ -1087,959 +895,297 @@
     let activeTable = null;
     let currentItemIdx = null;
     let currentNoteIdx = null;
-    
-    // UI State
     let selectedTable = null;
     let confirmCallback = null;
-    let editContext = { type: null, id: null, name: '', price: null };
+    let editContext = { type: null, id: null, name: '', price: null, ingredients: '', instructions: '' };
     let currentShowTable = null;
     let currentPin = '';
 
-    // دالة لضمان وجود order لكل العناصر
     function ensureOrders() {
-        categories = categories.map((item, index) => {
-            if (item.order === undefined) item.order = index;
-            return item;
-        });
-        products = products.map((item, index) => {
-            if (item.order === undefined) item.order = index;
-            return item;
-        });
-        extras = extras.map((item, index) => {
-            if (item.order === undefined) item.order = index;
-            return item;
-        });
-        zutaten = zutaten.map((item, index) => {
-            if (item.order === undefined) item.order = index;
-            return item;
-        });
+        categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
+        products = products.map((item, index) => { if (item.order === undefined) item.order = index; if (item.recipeIngredients === undefined) item.recipeIngredients = ''; if (item.recipeInstructions === undefined) item.recipeInstructions = ''; return item; });
+        extras = extras.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
+        zutaten = zutaten.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
     }
 
-    // ========== CORE FUNCTIONS ==========
-    function openModal(id) { 
-        document.querySelectorAll('.modal').forEach(m => m.style.zIndex = '1000');
-        const modal = document.getElementById(id);
-        if(modal) {
-            modal.style.display = 'block';
-            modal.style.zIndex = '2000';
-        }
-    }
+    function openModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'block'; } }
+    function closeModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'none'; } }
 
-    function closeModal(id) { 
-        const modal = document.getElementById(id);
-        if(modal) {
-            modal.style.display = 'none';
-            modal.style.zIndex = '1000';
-        }
-    }
+    function showLoginModal() { currentPin = ''; updatePinDisplay(); openModal('modal-login'); }
+    function updatePinDisplay() { document.getElementById('pin-display').textContent = currentPin.padStart(4, '•'); }
+    function addPinDigit(digit) { if (currentPin.length < 4) { currentPin += digit; updatePinDisplay(); } }
+    function clearPin() { currentPin = ''; updatePinDisplay(); }
+    function submitPin() { if (currentPin === '1234') { closeModal('modal-login'); openAdmin(); } else if (currentPin === '4321') { closeModal('modal-login'); loadStats(); openModal('modal-stats'); } else { showToast("Falscher PIN"); clearPin(); } }
+    function createPinPad() { const pad = document.getElementById('pin-pad'); pad.innerHTML = ''; for (let i = 1; i <= 9; i++) { const btn = document.createElement('button'); btn.className = 'pin-btn'; btn.textContent = i; btn.onclick = () => addPinDigit(i.toString()); pad.appendChild(btn); } const btn0 = document.createElement('button'); btn0.className = 'pin-btn'; btn0.textContent = '0'; btn0.onclick = () => addPinDigit('0'); pad.appendChild(btn0); const empty = document.createElement('button'); empty.className = 'pin-btn'; empty.style.visibility = 'hidden'; pad.appendChild(empty); }
 
-    // ========== LOGIN FUNCTIONS ==========
-    function showLoginModal() {
-        currentPin = '';
-        updatePinDisplay();
-        openModal('modal-login');
-    }
-
-    function updatePinDisplay() {
-        const display = document.getElementById('pin-display');
-        display.textContent = currentPin.padStart(4, '•');
-    }
-
-    function addPinDigit(digit) {
-        if (currentPin.length < 4) {
-            currentPin += digit;
-            updatePinDisplay();
-        }
-    }
-
-    function clearPin() {
-        currentPin = '';
-        updatePinDisplay();
-    }
-
-    function submitPin() {
-        if (currentPin === '1234') {
-            closeModal('modal-login');
-            openAdmin();
-        } else if (currentPin === '4321') {
-            closeModal('modal-login');
-            loadStats();
-            openModal('modal-stats');
-        } else {
-            showToast("Falscher PIN");
-            clearPin();
-        }
-    }
-
-    function createPinPad() {
-        const pad = document.getElementById('pin-pad');
-        for (let i = 1; i <= 9; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'pin-btn';
-            btn.textContent = i;
-            btn.onclick = () => addPinDigit(i.toString());
-            pad.appendChild(btn);
-        }
-        const btn0 = document.createElement('button');
-        btn0.className = 'pin-btn';
-        btn0.textContent = '0';
-        btn0.onclick = () => addPinDigit('0');
-        pad.appendChild(btn0);
-        const empty = document.createElement('button');
-        empty.className = 'pin-btn';
-        empty.style.visibility = 'hidden';
-        pad.appendChild(empty);
-    }
-
-    // ========== STATS FUNCTIONS (KOMPLETT REPARIERT) ==========
     function loadStats() {
-        console.log("loadStats wird ausgeführt");
-        console.log("Sales-Array:", sales);
-        
         const period = document.getElementById('stats-period').value;
-        const fromInput = document.getElementById('stats-from');
-        const toInput = document.getElementById('stats-to');
-        
+        const fromInput = document.getElementById('stats-from'), toInput = document.getElementById('stats-to');
         let startDate, endDate = new Date();
-        const today = new Date();
-        today.setHours(0,0,0,0);
-
+        const today = new Date(); today.setHours(0,0,0,0);
         switch(period) {
-            case 'today':
-                startDate = today;
-                endDate = new Date(today.getTime() + 24*60*60*1000);
-                break;
-            case 'yesterday':
-                startDate = new Date(today.getTime() - 24*60*60*1000);
-                endDate = today;
-                break;
-            case 'week':
-                startDate = new Date(today);
-                startDate.setDate(today.getDate() - today.getDay());
-                endDate = new Date(startDate.getTime() + 7*24*60*60*1000);
-                break;
-            case 'month':
-                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                endDate = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-                break;
-            case 'custom':
-                if (!fromInput.value || !toInput.value) {
-                    showToast("Bitte Datum auswählen");
-                    return;
-                }
-                startDate = new Date(fromInput.value);
-                startDate.setHours(0,0,0,0);
-                endDate = new Date(toInput.value);
-                endDate.setHours(23,59,59,999);
-                break;
+            case 'today': startDate = today; endDate = new Date(today.getTime() + 24*60*60*1000); break;
+            case 'yesterday': startDate = new Date(today.getTime() - 24*60*60*1000); endDate = today; break;
+            case 'week': startDate = new Date(today); startDate.setDate(today.getDate() - today.getDay()); endDate = new Date(startDate.getTime() + 7*24*60*60*1000); break;
+            case 'month': startDate = new Date(today.getFullYear(), today.getMonth(), 1); endDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); break;
+            case 'custom': if (!fromInput.value || !toInput.value) { showToast("Bitte Datum auswählen"); return; } startDate = new Date(fromInput.value); startDate.setHours(0,0,0,0); endDate = new Date(toInput.value); endDate.setHours(23,59,59,999); break;
         }
-
-        // WICHTIG: Alle bezahlten Bestellungen aus sales holen
-        const paidSales = sales.filter(sale => {
-            if (!sale.paidTime) return false;
-            return sale.paidTime >= startDate && sale.paidTime < endDate;
-        });
-        
-        console.log("Gefilterte Sales:", paidSales);
-        
-        let total = 0;
-        let itemCount = 0;
-        
-        paidSales.forEach(sale => {
-            if (sale.batches && Array.isArray(sale.batches)) {
-                sale.batches.forEach(batch => {
-                    if (batch.items && Array.isArray(batch.items)) {
-                        batch.items.forEach(item => {
-                            const itemPrice = item.price || 0;
-                            const extrasPrice = item.selectedExtras ? 
-                                item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0;
-                            const quantity = item.quantity || 1;
-                            total += (itemPrice + extrasPrice) * quantity;
-                            itemCount += quantity;
-                        });
-                    }
-                });
-            }
-        });
-
+        const paidSales = sales.filter(sale => sale.paidTime && sale.paidTime >= startDate && sale.paidTime < endDate);
+        let total = 0, itemCount = 0;
+        paidSales.forEach(sale => { if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; const quantity = item.quantity || 1; total += (itemPrice + extrasPrice) * quantity; itemCount += quantity; }); }); });
         document.getElementById('stats-total').innerText = total.toFixed(2) + ' €';
         document.getElementById('stats-count').innerText = paidSales.length;
         document.getElementById('stats-avg').innerText = (paidSales.length ? (total / paidSales.length).toFixed(2) : '0.00') + ' €';
         document.getElementById('stats-items').innerText = itemCount;
-
-        // Bestellungen Tabelle
         const ordersList = document.getElementById('stats-orders-list');
-        ordersList.innerHTML = paidSales.sort((a,b) => b.paidTime - a.paidTime).map((sale, idx) => {
-            const date = new Date(sale.paidTime);
-            let orderTotal = 0;
-            let itemsCount = 0;
-            
-            if (sale.batches && Array.isArray(sale.batches)) {
-                sale.batches.forEach(batch => {
-                    if (batch.items && Array.isArray(batch.items)) {
-                        batch.items.forEach(item => {
-                            const itemPrice = item.price || 0;
-                            const extrasPrice = item.selectedExtras ? 
-                                item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0;
-                            orderTotal += (itemPrice + extrasPrice) * (item.quantity || 1);
-                            itemsCount += item.quantity || 1;
-                        });
-                    }
-                });
-            }
-            
-            return `<tr>
-                <td>${idx+1}</td>
-                <td>${date.toLocaleDateString()}</td>
-                <td>${date.toLocaleTimeString()}</td>
-                <td>${sale.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + sale.table}</td>
-                <td>${itemsCount}</td>
-                <td>${orderTotal.toFixed(2)} €</td>
-            </tr>`;
-        }).join('');
-
-        // Produkte Statistik
+        ordersList.innerHTML = paidSales.sort((a,b) => b.paidTime - a.paidTime).map((sale, idx) => { let orderTotal = 0, itemsCount = 0; if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; orderTotal += (itemPrice + extrasPrice) * (item.quantity || 1); itemsCount += item.quantity || 1; }); }); const date = new Date(sale.paidTime); return `<tr><td>${idx+1}</td><td>${date.toLocaleDateString()}</td><td>${date.toLocaleTimeString()}</td><td>${sale.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + sale.table}</td><td>${itemsCount}</td><td>${orderTotal.toFixed(2)} €</td></tr>`; }).join('');
         const productStats = {};
-        paidSales.forEach(sale => {
-            if (sale.batches && Array.isArray(sale.batches)) {
-                sale.batches.forEach(batch => {
-                    if (batch.items && Array.isArray(batch.items)) {
-                        batch.items.forEach(item => {
-                            const key = item.name;
-                            if (!productStats[key]) {
-                                productStats[key] = { quantity: 0, total: 0 };
-                            }
-                            const itemPrice = item.price || 0;
-                            const extrasPrice = item.selectedExtras ? 
-                                item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0;
-                            productStats[key].quantity += item.quantity || 1;
-                            productStats[key].total += (itemPrice + extrasPrice) * (item.quantity || 1);
-                        });
-                    }
-                });
-            }
-        });
+        paidSales.forEach(sale => { if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const key = item.name; if (!productStats[key]) productStats[key] = { quantity: 0, total: 0 }; const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; productStats[key].quantity += item.quantity || 1; productStats[key].total += (itemPrice + extrasPrice) * (item.quantity || 1); }); }); });
+        document.getElementById('stats-products-list').innerHTML = Object.entries(productStats).sort((a,b) => b[1].total - a[1].total).map(([name, data]) => `<tr><td>${name}</td><td>${data.quantity}</td><td>${data.total.toFixed(2)} €</td></tr>`).join('');
+    }
+    function onStatsPeriodChange() { const period = document.getElementById('stats-period').value; const fromInput = document.getElementById('stats-from'), toInput = document.getElementById('stats-to'); if (period === 'custom') { fromInput.style.display = 'inline'; toInput.style.display = 'inline'; } else { fromInput.style.display = 'none'; toInput.style.display = 'none'; } loadStats(); }
+    function switchStatsTab(tab) { document.querySelectorAll('.stats-tab-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active'); if (tab === 'orders') { document.getElementById('stats-orders-section').style.display = 'block'; document.getElementById('stats-products-section').style.display = 'none'; } else { document.getElementById('stats-orders-section').style.display = 'none'; document.getElementById('stats-products-section').style.display = 'block'; } }
 
-        const productsList = document.getElementById('stats-products-list');
-        productsList.innerHTML = Object.entries(productStats)
-            .sort((a,b) => b[1].total - a[1].total)
-            .map(([name, data]) => `<tr>
-                <td>${name}</td>
-                <td>${data.quantity}</td>
-                <td>${data.total.toFixed(2)} €</td>
-            </tr>`).join('');
+    function switchAdminTab(tabId) { document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active')); document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`admin-${tabId}-section`).classList.add('active'); }
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); switchAdminTab(tabId); if (tabId === 'categories') renderCategoriesAdmin(); else if (tabId === 'products') renderProductsAdmin(); else if (tabId === 'extras') renderExtrasAdmin(); else if (tabId === 'zutaten') renderZutatenAdmin(); }); });
+
+    function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
+    function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
+
+    function openTables() { const grid = document.getElementById('tables-grid'); const openOrders = orders.filter(o => o.status === 'open'); grid.innerHTML = openOrders.map(o => { let lastTime = ''; if (o.batches && o.batches.length > 0) { const lastBatch = o.batches[o.batches.length - 1]; lastTime = lastBatch.time || ''; } return `<div class="table-box"><h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3><small>${lastTime ? '🕒 ' + lastTime : ''}</small><div style="margin-top: 10px;"><button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button><button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button><button onclick="event.stopPropagation(); payTable(${o.id})" style="background:var(--green);">Pay</button><button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button></div></div>`; }).join('') || "Keine aktiven Tische"; openModal('modal-tables'); }
+
+    function payTable(oid) { const order = orders.find(o => o.id == oid); window.currentPayId = oid; let total = 0; if (order.batches) { order.batches.forEach(b => { if (b.items) { b.items.forEach(i => { const itemPrice = i.price || 0; const extrasPrice = i.selectedExtras ? i.selectedExtras.reduce((s,e) => s + (e.price || 0), 0) : 0; total += (itemPrice + extrasPrice) * (i.quantity || 1); }); } }); } document.getElementById('pay-amount').innerText = total.toFixed(2) + " €"; document.getElementById('pay-title').innerText = order.table === 'takeaway' ? 'Takeaway' : "Tisch " + order.table; openModal('modal-pay'); }
+    function processPay(method) { const order = orders.find(o => o.id == window.currentPayId); if (!order) return; order.status = 'paid'; order.payMethod = method; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders = orders.filter(o => o.id !== order.id); save(); db.ref('active_orders/' + order.table).remove(); showToast("Bezahlt mit " + method); if(activeTable == order.table) resetCart(); closeModal('modal-pay'); openTables(); }
+
+    function confirmDeleteTable() { showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); if (idx !== -1) { const order = orders[idx]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(idx, 1); save(); db.ref('active_orders/' + currentShowTable).remove(); closeModal('modal-show-order'); openTables(); } }); }
+    function confirmDeleteTableFromCard(tableId) { currentShowTable = tableId; showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); if (orderIndex !== -1) { const order = orders[orderIndex]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(orderIndex, 1); save(); db.ref('active_orders/' + tableId).remove(); openTables(); } }); }
+
+    function openKitchen() { openModal('modal-kitchen'); const container = document.getElementById('kitchen-content'); container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>"; db.ref('active_orders').on('value', (snapshot) => { const allData = snapshot.val(); if (!allData) { container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>"; return; } let allOrders = []; Object.entries(allData).forEach(([tNum, batches]) => { Object.entries(batches).forEach(([bId, batch]) => { allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000 }); }); }); allOrders.sort((a, b) => b.timestamp - a.timestamp); let html = ""; allOrders.forEach(order => { const lateClass = order.isLate ? "late-blink" : ""; html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; }); container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; }); }
+    function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
+
+    function showOrder(tableId) { const order = orders.find(o => o.table == tableId && o.status === 'open'); if (!order) return alert("Keine offene Bestellung"); currentShowTable = tableId; let itemsHtml = ''; let total = 0; order.batches.forEach(batch => { batch.items.forEach(item => { let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); let qty = item.quantity || 1; total += itemPrice * qty; itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span>${(itemPrice * qty).toFixed(2)}€</span></div>`; if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`; }); }); document.getElementById('show-order-items').innerHTML = itemsHtml; document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €'; document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`; openModal('modal-show-order'); }
+
+    function init() { ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); }
+    function loadFromFirebase() { db.ref('data').once('value', (snapshot) => { const data = snapshot.val(); if (data && data.categories) { categories = data.categories || []; products = data.products || []; extras = data.extras || []; zutaten = data.zutaten || []; orders = data.orders || []; sales = data.sales || []; } ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); }); }
+    function saveToFirebase() { db.ref('data').set({ categories, products, extras, zutaten, orders, sales }); }
+    function save() { localStorage.setItem('cats', JSON.stringify(categories)); localStorage.setItem('prods', JSON.stringify(products)); localStorage.setItem('extras', JSON.stringify(extras)); localStorage.setItem('zutaten', JSON.stringify(zutaten)); localStorage.setItem('orders', JSON.stringify(orders)); localStorage.setItem('sales', JSON.stringify(sales)); saveToFirebase(); }
+
+    function renderCats() { const grid = document.getElementById('cat-grid'); if (!grid) return; const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); grid.innerHTML = sorted.map(c => `<div class="card cat-card" onclick="renderProds(${c.id})">${c.name}</div>`).join(''); const catSelect = document.getElementById('p-cat-select'); if (catSelect) catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
+    
+    function renderProds(cid) { 
+        const grid = document.getElementById('prod-grid'); 
+        if (!grid) return; 
+        const sorted = products.filter(p => p.catId == cid).sort((a,b) => (a.order || 0) - (b.order || 0)); 
+        grid.innerHTML = sorted.map(p => `
+            <div class="card prod-card">
+                <div onclick="addToCart(${p.id})" style="cursor:pointer; flex:1;">${p.name}</div>
+                <div class="prod-price" onclick="addToCart(${p.id})" style="cursor:pointer;">${p.price.toFixed(2)} €</div>
+                <button class="recipe-btn" onclick="event.stopPropagation(); showRecipe(${p.id})">📖 Rezept anzeigen</button>
+            </div>
+        `).join(''); 
     }
 
-    function onStatsPeriodChange() {
-        const period = document.getElementById('stats-period').value;
-        const fromInput = document.getElementById('stats-from');
-        const toInput = document.getElementById('stats-to');
-        if (period === 'custom') {
-            fromInput.style.display = 'inline';
-            toInput.style.display = 'inline';
-        } else {
-            fromInput.style.display = 'none';
-            toInput.style.display = 'none';
-        }
-        loadStats();
-    }
+    function showRecipe(productId) { const product = products.find(p => p.id === productId); if (!product) return; document.getElementById('recipe-title').innerText = product.name; document.getElementById('recipe-ingredients').innerHTML = product.recipeIngredients ? product.recipeIngredients.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zutaten hinterlegt</em>'; document.getElementById('recipe-instructions').innerHTML = product.recipeInstructions ? product.recipeInstructions.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zubereitung hinterlegt</em>'; openModal('modal-recipe-view'); }
 
-    function switchStatsTab(tab) {
-        document.querySelectorAll('.stats-tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        if (tab === 'orders') {
-            document.getElementById('stats-orders-section').style.display = 'block';
-            document.getElementById('stats-products-section').style.display = 'none';
-        } else {
-            document.getElementById('stats-orders-section').style.display = 'none';
-            document.getElementById('stats-products-section').style.display = 'block';
-        }
-    }
-
-    // ========== ADMIN FUNCTIONS ==========
-    function switchAdminTab(tabId) {
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active'));
-        
-        document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active');
-        document.getElementById(`admin-${tabId}-section`).classList.add('active');
-    }
-
-    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.getAttribute('data-tab');
-            switchAdminTab(tabId);
-            if (tabId === 'categories') renderCategoriesAdmin();
-            else if (tabId === 'products') renderProductsAdmin();
-            else if (tabId === 'extras') renderExtrasAdmin();
-            else if (tabId === 'zutaten') renderZutatenAdmin();
-        });
-    });
-
-    function callWaiter() {
-        db.ref('notifications/waiter').set({ timestamp: Date.now() })
-            .then(() => {
-                playSound(WAITER_SOUND_URL);
-                showToast("🔔 Kellner gerufen");
-            })
-            .catch((error) => {
-                console.error(error);
-                playSound(WAITER_SOUND_URL);
-                showToast("🔔 Kellner (lokal)");
-            });
-    }
-
-    function openAdmin() { 
-        renderCats(); 
-        const filter = document.getElementById('admin-prod-filter');
-        if (filter) {
-            filter.innerHTML = '<option value="all">Alle</option>' + 
-                categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        }
-        switchAdminTab('categories');
-        renderCategoriesAdmin();
-        renderProductsAdmin();
-        renderExtrasAdmin();
-        renderZutatenAdmin();
-        openModal('modal-admin'); 
-    }
-
-    function openTables() {
-        const grid = document.getElementById('tables-grid');
-        const openOrders = orders.filter(o => o.status === 'open');
-        grid.innerHTML = openOrders.map(o => {
-            let lastTime = '';
-            if (o.batches && o.batches.length > 0) {
-                const lastBatch = o.batches[o.batches.length - 1];
-                lastTime = lastBatch.time || '';
-            }
-            return `
-                <div class="table-box">
-                    <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
-                    <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
-                    <div style="margin-top: 10px;">
-                        <button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button>
-                        <button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button>
-                        <button onclick="event.stopPropagation(); payTable(${o.id})" style="background:var(--green);">Pay</button>
-                        <button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button>
+    function renderCart() { 
+        const list = document.getElementById('cart-list'); 
+        if (!list) return; 
+        let total = 0, html = ""; 
+        cartLocked.forEach(item => { 
+            let p = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
+            total += p; 
+            html += `<div class="cart-item locked"><div class="cart-item-main"><span class="cart-item-name">${item.name}</span></div><div class="cart-item-extras">${item.selectedExtras ? item.selectedExtras.map(e=>e.name).join(', ') : ''}</div></div>`; 
+        }); 
+        cartNew.forEach((item, idx) => { 
+            let unitPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
+            let qty = item.quantity || 1; 
+            let itemTotal = unitPrice * qty; 
+            total += itemTotal; 
+            html += `<div class="cart-item new">
+                <div class="cart-item-main">
+                    <span class="cart-item-name">${item.name}</span>
+                    <span class="cart-item-quantity">x${qty}</span>
+                    <div class="cart-item-prices">
+                        <span class="cart-item-unit-price">${unitPrice.toFixed(2)}€</span>
+                        <span class="cart-item-total-price">${itemTotal.toFixed(2)}€</span>
                     </div>
                 </div>
-            `;
-        }).join('') || "Keine aktiven Tische";
-        openModal('modal-tables');
+                ${item.note ? `<div class="cart-item-note">📝 ${item.note}</div>` : ''}
+                ${item.selectedExtras && item.selectedExtras.length ? `<div class="cart-item-extras">+ ${item.selectedExtras.map(e=>e.name).join(', ')}</div>` : ''}
+                <div class="action-btns">
+                    <button class="btn-sm btn-sm-qty" onclick="changeQty(${idx},1)">+1</button>
+                    <button class="btn-sm btn-sm-qty-minus" onclick="changeQty(${idx},-1)">-1</button>
+                    <button class="btn-sm btn-sm-extra" onclick="openExtraTypeSelector(${idx})">Extra</button>
+                    <button class="btn-sm btn-sm-note" onclick="addNote(${idx})">Note</button>
+                    <button class="btn-sm btn-sm-del" onclick="removeFromCart(${idx})">X</button>
+                </div>
+            </div>`; 
+        }); 
+        list.innerHTML = html; 
+        document.getElementById('cart-total-bar').innerText = total.toFixed(2) + ' €'; 
+        document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb"; 
     }
 
-    // ========== PAYMENT FUNCTIONS (REPARIERT) ==========
-    function payTable(oid) { 
-        const order = orders.find(o => o.id == oid); 
-        window.currentPayId = oid; 
-        let total = 0; 
-        if (order.batches) {
-            order.batches.forEach(b => {
-                if (b.items) {
-                    b.items.forEach(i => {
-                        const itemPrice = i.price || 0;
-                        const extrasPrice = i.selectedExtras ? i.selectedExtras.reduce((s,e) => s + (e.price || 0), 0) : 0;
-                        total += (itemPrice + extrasPrice) * (i.quantity || 1);
-                    });
-                }
-            });
-        }
-        document.getElementById('pay-amount').innerText = total.toFixed(2) + " €"; 
-        document.getElementById('pay-title').innerText = order.table === 'takeaway' ? 'Takeaway' : "Tisch " + order.table; 
-        openModal('modal-pay'); 
-    }
-
-    function processPay(method) { 
-        const order = orders.find(o => o.id == window.currentPayId); 
-        if (!order) return;
-        
-        // Bestellung als bezahlt markieren
-        order.status = 'paid'; 
-        order.payMethod = method; 
-        order.paidTime = Date.now(); // WICHTIG: Zeitstempel setzen
-        
-        // TIEFE KOPIE der Bestellung für Sales erstellen
-        const salesOrder = JSON.parse(JSON.stringify(order));
-        
-        // Zur Sales-Array hinzufügen
-        sales.push(salesOrder);
-        
-        // Aus aktiven Orders entfernen
-        orders = orders.filter(o => o.id !== order.id);
-        
-        // Speichern
-        save();
-        
-        // Firebase aktualisieren
-        db.ref('active_orders/' + order.table).remove();
-        
-        showToast("Bezahlt mit " + method); 
-        
-        if(activeTable == order.table) resetCart(); 
-        closeModal('modal-pay'); 
-        openTables(); 
-    }
-
-    // ========== DELETE FUNCTIONS (REPARIERT) ==========
-    function confirmDeleteTable() {
-        showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => {
-            const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open');
-            if (idx !== -1) { 
-                const order = orders[idx];
-                order.status = 'paid';
-                order.paidTime = Date.now(); // WICHTIG: Zeitstempel setzen
-                
-                // TIEFE KOPIE für Sales erstellen
-                const salesOrder = JSON.parse(JSON.stringify(order));
-                sales.push(salesOrder);
-                
-                orders.splice(idx, 1); 
-                save(); 
-                db.ref('active_orders/' + currentShowTable).remove(); 
-                closeModal('modal-show-order'); 
-                openTables(); 
-            }
-        });
-    }
-
-    function confirmDeleteTableFromCard(tableId) {
-        currentShowTable = tableId;
-        showConfirm(`Tisch ${tableId} wirklich löschen?`, () => {
-            const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open');
-            if (orderIndex !== -1) {
-                const order = orders[orderIndex];
-                order.status = 'paid';
-                order.paidTime = Date.now(); // WICHTIG: Zeitstempel setzen
-                
-                // TIEFE KOPIE für Sales erstellen
-                const salesOrder = JSON.parse(JSON.stringify(order));
-                sales.push(salesOrder);
-                
-                orders.splice(orderIndex, 1);
-                save();
-                db.ref('active_orders/' + tableId).remove();
-                openTables();
-            }
-        });
-    }
-
-function openKitchen() {
-    openModal('modal-kitchen');
-    const container = document.getElementById('kitchen-content');
-    container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>";
-
-    db.ref('active_orders').on('value', (snapshot) => {
-        const allData = snapshot.val();
-        if (!allData) {
-            container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>";
-            return;
-        }
-        
-        // ========== التعديل هنا: جمع كل الطلبات وترتيبها ==========
-        let allOrders = [];
-        
-        Object.entries(allData).forEach(([tNum, batches]) => {
-            Object.entries(batches).forEach(([bId, batch]) => {
-                // إضافة معلومات الوقت والطاولة لكل طلب
-                allOrders.push({
-                    tableNum: tNum,
-                    batchId: bId,
-                    time: batch.time || '',
-                    timestamp: batch.batchId || 0, // استخدام batchId كـ timestamp
-                    items: batch.items || [],
-                    isLate: (Date.now() - (batch.batchId || 0)) > 300000
-                });
-            });
-        });
-        
-        // ترتيب الطلبات: الأحدث أولاً (حسب timestamp)
-        allOrders.sort((a, b) => b.timestamp - a.timestamp);
-        
-        // عرض الطلبات المرتبة
-        let html = "";
-        const now = Date.now();
-        
-        allOrders.forEach(order => {
-            const lateClass = order.isLate ? "late-blink" : "";
-            html += `
-                <div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')">
-                    <div class="card-header-pos">
-                        <b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">
-                            ${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}
-                        </b>
-                        <b style="color:#2980b9;">🕒 ${order.time || ''}</b>
-                    </div>
-                    <div style="flex-grow: 1;">
-                        ${order.items ? order.items.map(i => `
-                            <div style="border-bottom:1px solid #f0f0f0; padding:8px 0;">
-                                <div style="font-size:1.1rem; font-weight:bold;">
-                                    ${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span>
-                                </div>
-                                <div style="font-size:0.85rem; color:#666;">
-                                    ${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}
-                                </div>
-                                ${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}
-                            </div>
-                        `).join('') : 'Keine Items'}
-                    </div>
-                    <button class="btn-main" style="background:#27ae60; margin-top:10px;" 
-                            onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">
-                        FERTIG
-                    </button>
-                </div>`;
-        });
-        
-        container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>";
-    });
-}
-
-    function showOrder(tableId) {
-        const order = orders.find(o => o.table == tableId && o.status === 'open');
-        if (!order) return alert("Keine offene Bestellung");
-        currentShowTable = tableId;
-        let itemsHtml = '';
-        let total = 0;
-        order.batches.forEach(batch => {
-            batch.items.forEach(item => {
-                let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
-                let qty = item.quantity || 1;
-                total += itemPrice * qty;
-                itemsHtml += `
-                    <div class="order-item-row">
-                        <span>
-                            ${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}
-                        </span>
-                        <span>${(itemPrice * qty).toFixed(2)}€</span>
-                    </div>
-                `;
-                if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`;
-            });
-        });
-        document.getElementById('show-order-items').innerHTML = itemsHtml;
-        document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €';
-        document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`;
-        openModal('modal-show-order');
-    }
-
-    // ========== INIT ==========
-    function init() {
-        ensureOrders();
-        renderCats();
-        if (categories.length > 0) renderProds(categories[0].id);
-        renderCart();
-        createTableGrid();
-        createPinPad();
-        loadFromFirebase();
-    }
-
-    // ========== FIREBASE DATA ==========
-    function loadFromFirebase() {
-        db.ref('data').once('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data && data.categories) {
-                categories = data.categories || [];
-                products = data.products || [];
-                extras = data.extras || [];
-                zutaten = data.zutaten || [];
-                orders = data.orders || [];
-                sales = data.sales || [];
-            }
-            ensureOrders();
-            renderCats(); 
-            if (categories.length > 0) renderProds(categories[0].id);
-        });
-    }
-
-    function saveToFirebase() {
-        db.ref('data').set({ categories, products, extras, zutaten, orders, sales });
-    }
-
-    function save() {
-        localStorage.setItem('cats', JSON.stringify(categories));
-        localStorage.setItem('prods', JSON.stringify(products));
-        localStorage.setItem('extras', JSON.stringify(extras));
-        localStorage.setItem('zutaten', JSON.stringify(zutaten));
-        localStorage.setItem('orders', JSON.stringify(orders));
-        localStorage.setItem('sales', JSON.stringify(sales));
-        saveToFirebase();
-    }
-
-    // ========== RENDERING ==========
-    function renderCats() {
-        const grid = document.getElementById('cat-grid');
-        if (!grid) return;
-        const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0));
-        grid.innerHTML = sorted.map(c => 
-            `<div class="card cat-card" onclick="renderProds(${c.id})">
-                ${c.name}
-            </div>`
-        ).join('');
-        const catSelect = document.getElementById('p-cat-select');
-        if (catSelect) catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    }
-
-    function renderProds(cid) {
-        const grid = document.getElementById('prod-grid');
-        if (!grid) return;
-        const sorted = products.filter(p => p.catId == cid).sort((a,b) => (a.order || 0) - (b.order || 0));
-        grid.innerHTML = sorted.map(p => 
-            `<div class="card prod-card" onclick="addToCart(${p.id})">
-                ${p.name}<br>${p.price.toFixed(2)} €
-            </div>`
-        ).join('');
-    }
-
-    function renderCart() {
-        const list = document.getElementById('cart-list');
-        if (!list) return;
-        let total = 0, html = "";
-        cartLocked.forEach(item => {
-            let p = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
-            total += p;
-            html += `<div class="cart-item locked"><div><b>${item.name}</b></div><div style="font-size:11px">${item.selectedExtras ? item.selectedExtras.map(e=>e.name).join(', ') : ''}</div></div>`;
-        });
-        cartNew.forEach((item, idx) => {
-            let p = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
-            let qty = item.quantity || 1;
-            total += p * qty;
-            html += `<div class="cart-item new"><div style="display:flex; justify-content:space-between;"><b>${item.name} <span style="color:var(--blue)">x${qty}</span></b></div>${item.note ? `<div style="color:var(--red); font-size:12px;">📝 ${item.note}</div>` : ''}${item.selectedExtras && item.selectedExtras.length ? `<div style="font-size:11px; color:var(--blue);">+ ${item.selectedExtras.map(e=>e.name).join(', ')}</div>` : ''}<div class="action-btns"><button class="btn-sm" style="background:var(--green)" onclick="changeQty(${idx},1)">+</button><button class="btn-sm" style="background:var(--orange)" onclick="changeQty(${idx},-1)">-</button><button class="btn-sm btn-extra" onclick="openExtraTypeSelector(${idx})">EXTRA</button><button class="btn-sm btn-note" onclick="addNote(${idx})">NOTE</button><button class="btn-sm btn-del" onclick="removeFromCart(${idx})">X</button></div></div>`;
-        });
-        list.innerHTML = html;
-        document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb";
-    }
-
-    function moveUp(type, id) {
-        let arr;
-        if (type === 'category') arr = categories;
-        else if (type === 'product') arr = products;
-        else if (type === 'extra') arr = extras;
-        else if (type === 'zutat') arr = zutaten;
-        else return;
-        
-        const index = arr.findIndex(item => item.id === id);
-        if (index <= 0) return;
-        
-        const tempOrder = arr[index].order;
-        arr[index].order = arr[index-1].order;
-        arr[index-1].order = tempOrder;
-        
-        arr.sort((a,b) => (a.order || 0) - (b.order || 0));
-        
-        save();
+    // ========== FIXED ARROW FUNCTIONS ==========
+    function moveUp(type, id) { 
         if (type === 'category') {
+            const index = categories.findIndex(item => item.id === id);
+            if (index <= 0) return;
+            const tempOrder = categories[index].order;
+            categories[index].order = categories[index-1].order;
+            categories[index-1].order = tempOrder;
+            categories.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderCategoriesAdmin();
             renderCats();
-        } else if (type === 'product') {
+        }
+        else if (type === 'product') {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            const catId = product.catId;
+            let sameCatProducts = products.filter(p => p.catId === catId);
+            sameCatProducts.sort((a,b) => (a.order || 0) - (b.order || 0));
+            const index = sameCatProducts.findIndex(p => p.id === id);
+            if (index <= 0) return;
+            const tempOrder = sameCatProducts[index].order;
+            sameCatProducts[index].order = sameCatProducts[index-1].order;
+            sameCatProducts[index-1].order = tempOrder;
+            sameCatProducts.forEach(p => {
+                const original = products.find(prod => prod.id === p.id);
+                if (original) original.order = p.order;
+            });
+            products.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderProductsAdmin();
-            if (activeTable) renderProds(activeTable); else if (categories[0]) renderProds(categories[0].id);
-        } else if (type === 'extra') {
+            renderProds(catId);
+        }
+        else if (type === 'extra') {
+            const index = extras.findIndex(item => item.id === id);
+            if (index <= 0) return;
+            const tempOrder = extras[index].order;
+            extras[index].order = extras[index-1].order;
+            extras[index-1].order = tempOrder;
+            extras.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderExtrasAdmin();
-        } else if (type === 'zutat') {
+        }
+        else if (type === 'zutat') {
+            const index = zutaten.findIndex(item => item.id === id);
+            if (index <= 0) return;
+            const tempOrder = zutaten[index].order;
+            zutaten[index].order = zutaten[index-1].order;
+            zutaten[index-1].order = tempOrder;
+            zutaten.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderZutatenAdmin();
         }
     }
 
-    function moveDown(type, id) {
-        let arr;
-        if (type === 'category') arr = categories;
-        else if (type === 'product') arr = products;
-        else if (type === 'extra') arr = extras;
-        else if (type === 'zutat') arr = zutaten;
-        else return;
-        
-        const index = arr.findIndex(item => item.id === id);
-        if (index >= arr.length-1) return;
-        
-        const tempOrder = arr[index].order;
-        arr[index].order = arr[index+1].order;
-        arr[index+1].order = tempOrder;
-        
-        arr.sort((a,b) => (a.order || 0) - (b.order || 0));
-        
-        save();
+    function moveDown(type, id) { 
         if (type === 'category') {
+            const index = categories.findIndex(item => item.id === id);
+            if (index >= categories.length-1) return;
+            const tempOrder = categories[index].order;
+            categories[index].order = categories[index+1].order;
+            categories[index+1].order = tempOrder;
+            categories.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderCategoriesAdmin();
             renderCats();
-        } else if (type === 'product') {
+        }
+        else if (type === 'product') {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            const catId = product.catId;
+            let sameCatProducts = products.filter(p => p.catId === catId);
+            sameCatProducts.sort((a,b) => (a.order || 0) - (b.order || 0));
+            const index = sameCatProducts.findIndex(p => p.id === id);
+            if (index >= sameCatProducts.length-1) return;
+            const tempOrder = sameCatProducts[index].order;
+            sameCatProducts[index].order = sameCatProducts[index+1].order;
+            sameCatProducts[index+1].order = tempOrder;
+            sameCatProducts.forEach(p => {
+                const original = products.find(prod => prod.id === p.id);
+                if (original) original.order = p.order;
+            });
+            products.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderProductsAdmin();
-            if (activeTable) renderProds(activeTable); else if (categories[0]) renderProds(categories[0].id);
-        } else if (type === 'extra') {
+            renderProds(catId);
+        }
+        else if (type === 'extra') {
+            const index = extras.findIndex(item => item.id === id);
+            if (index >= extras.length-1) return;
+            const tempOrder = extras[index].order;
+            extras[index].order = extras[index+1].order;
+            extras[index+1].order = tempOrder;
+            extras.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderExtrasAdmin();
-        } else if (type === 'zutat') {
+        }
+        else if (type === 'zutat') {
+            const index = zutaten.findIndex(item => item.id === id);
+            if (index >= zutaten.length-1) return;
+            const tempOrder = zutaten[index].order;
+            zutaten[index].order = zutaten[index+1].order;
+            zutaten[index+1].order = tempOrder;
+            zutaten.sort((a,b) => (a.order || 0) - (b.order || 0));
+            save();
             renderZutatenAdmin();
         }
     }
 
-    function renderCategoriesAdmin() {
-        const cont = document.getElementById('admin-cat-list'); if (!cont) return;
-        const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0));
-        cont.innerHTML = sorted.map(c => `<div class="admin-item"><span><strong>${c.name}</strong></span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id},'${c.name}')">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join('');
-    }
+    function renderCategoriesAdmin() { const cont = document.getElementById('admin-cat-list'); if (!cont) return; const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(c => `<div class="admin-item"><span><strong>${c.name}</strong></span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id},'${c.name}')">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join(''); }
+    function renderProductsAdmin() { const cont = document.getElementById('admin-product-list'); if (!cont) return; const filter = document.getElementById('admin-prod-filter'); const catId = filter ? filter.value : 'all'; let filtered = (catId === 'all') ? products : products.filter(p => p.catId == catId); const sorted = [...filtered].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(p => { const cat = categories.find(c => c.id == p.catId); return `<div class="admin-item"><div style="flex:2;"><strong>${p.name}</strong></div><div style="flex:1;">${p.price.toFixed(2)}€</div><div style="flex:1;">${cat ? cat.name : '?'}</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id},'${p.name}',${p.price},'${(p.recipeIngredients || '').replace(/'/g, "\\'")}','${(p.recipeInstructions || '').replace(/'/g, "\\'")}')">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`; }).join(''); }
+    function renderExtrasAdmin() { const cont = document.getElementById('admin-ex-list'); if (!cont) return; const sorted = [...extras].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(e => `<div class="admin-item"><span><strong>${e.name}</strong> (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id},'${e.name}',${e.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join(''); }
+    function renderZutatenAdmin() { const cont = document.getElementById('admin-zut-list'); if (!cont) return; const sorted = [...zutaten].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(z => `<div class="admin-item"><span><strong>${z.name}</strong> (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id},'${z.name}',${z.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join(''); }
 
-    function renderProductsAdmin() {
-        const cont = document.getElementById('admin-product-list'); if (!cont) return;
-        const filter = document.getElementById('admin-prod-filter'); const catId = filter ? filter.value : 'all';
-        let filtered = (catId === 'all') ? products : products.filter(p => p.catId == catId);
-        const sorted = [...filtered].sort((a,b) => (a.order || 0) - (b.order || 0));
-        cont.innerHTML = sorted.map(p => { const cat = categories.find(c => c.id == p.catId); return `<div class="admin-item"><div style="flex:2;"><strong>${p.name}</strong></div><div style="flex:1;">${p.price.toFixed(2)}€</div><div style="flex:1;">${cat ? cat.name : '?'}</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id},'${p.name}',${p.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`; }).join('');
-    }
+    function createTableGrid() { const grid = document.getElementById('table-grid'); if (!grid) return; let html = ''; for (let i=1; i<=20; i++) html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`; grid.innerHTML = html; }
+    function selectTable(num) { document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected'); selectedTable = num; document.getElementById('selected-table-display').innerText = `Tisch ${num}`; }
+    function selectTakeaway() { document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); selectedTable = 'takeaway'; document.getElementById('selected-table-display').innerText = '🥡 Takeaway'; }
+    function confirmTableSelection() { if (!selectedTable) { alert("Bitte wählen Sie einen Tisch oder Takeaway!"); return; } activeTable = selectedTable; closeModal('modal-table-grid'); confirmOrder(); }
+    function updateFreeTablesDisplay() { db.ref('active_orders').once('value', (snapshot) => { const occupiedTables = []; snapshot.forEach((tableSnapshot) => { const tableNum = tableSnapshot.key; if (tableNum !== 'takeaway') occupiedTables.push(tableNum); }); const tableButtons = document.querySelectorAll('#table-grid .table-btn'); tableButtons.forEach(btn => { const tableNum = btn.textContent; if (occupiedTables.includes(tableNum)) btn.style.display = 'none'; else btn.style.display = 'inline-block'; }); const freeTablesCount = Array.from(tableButtons).filter(btn => btn.style.display !== 'none').length; if (freeTablesCount === 0) alert('Keine freien Tische verfügbar! Nur Takeaway möglich.'); }); }
+    function initiateSend() { if(cartNew.length===0) return alert("Warenkorb leer!"); if(activeTable) { confirmOrder(); } else { updateFreeTablesDisplay(); openModal('modal-table-grid'); } }
+    function confirmOrder() { const tNum = activeTable; if(!tNum) return alert("Tisch fehlt!"); const newBatch = { batchId: Date.now(), time: new Date().toLocaleTimeString(), date: new Date().toLocaleDateString(), items: [...cartNew], status: 'new' }; db.ref('active_orders/' + tNum).push(newBatch).then(() => { let existing = orders.find(o => o.table == tNum && o.status === 'open'); if (existing) { existing.batches.push(newBatch); } else { orders.push({ id: Date.now(), table: tNum, status: 'open', batches: [newBatch] }); } save(); db.ref('notifications/kitchen').set({ timestamp: Date.now() }); showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet`); resetCart(); closeModal('modal-table-grid'); }).catch(e => { console.error(e); alert("Fehler!"); }); }
+    function loadTable(tNum) { const order = orders.find(o => o.table == tNum && o.status == 'open'); if (!order) return; activeTable = tNum; cartLocked = []; order.batches.forEach(b => cartLocked.push(...b.items)); cartNew = []; renderCart(); closeModal('modal-tables'); }
 
-    function renderExtrasAdmin() {
-        const cont = document.getElementById('admin-ex-list'); if (!cont) return;
-        const sorted = [...extras].sort((a,b) => (a.order || 0) - (b.order || 0));
-        cont.innerHTML = sorted.map(e => `<div class="admin-item"><span><strong>${e.name}</strong> (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id},'${e.name}',${e.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join('');
-    }
-
-    function renderZutatenAdmin() {
-        const cont = document.getElementById('admin-zut-list'); if (!cont) return;
-        const sorted = [...zutaten].sort((a,b) => (a.order || 0) - (b.order || 0));
-        cont.innerHTML = sorted.map(z => `<div class="admin-item"><span><strong>${z.name}</strong> (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id},'${z.name}',${z.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join('');
-    }
-
-    function createTableGrid() {
-        const grid = document.getElementById('table-grid'); if (!grid) return;
-        let html = ''; for (let i=1; i<=20; i++) html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`;
-        grid.innerHTML = html;
-    }
-
-    // ========== TABLE SELECTION ==========
-    // ========== FUNKTION ZUM AKTUALISIEREN DER FREIEN TISCHE ==========
-// ========== FUNKTION ZUM AKTUALISIEREN DER FREIEN TISCHE ==========
-function updateFreeTablesDisplay() {
-    // Lade alle aktiven Bestellungen von Firebase
-    db.ref('active_orders').once('value', (snapshot) => {
-        const occupiedTables = [];
-        
-        // Sammle alle besetzten Tische
-        snapshot.forEach((tableSnapshot) => {
-            const tableNum = tableSnapshot.key;
-            if (tableNum !== 'takeaway') {
-                occupiedTables.push(tableNum);
-            }
-        });
-        
-        // Aktualisiere die Tisch-Buttons im Grid
-        const tableButtons = document.querySelectorAll('#table-grid .table-btn');
-        
-        tableButtons.forEach(btn => {
-            const tableNum = btn.textContent;
-            
-            if (occupiedTables.includes(tableNum)) {
-                btn.style.display = 'none'; // Besetzte Tische verstecken
-            } else {
-                btn.style.display = 'inline-block'; // Freie Tische zeigen
-            }
-        });
-        
-        // Prüfe ob es freie Tische gibt
-        const freeTablesCount = Array.from(tableButtons).filter(btn => btn.style.display !== 'none').length;
-        
-        if (freeTablesCount === 0) {
-            alert('Keine freien Tische verfügbar! Nur Takeaway möglich.');
-        }
-    });
-}
-
-// ========== TABLE SELECTION (مع التأثير البصري) ==========
-function selectTable(num) {
-    // إزالة الكلاس selected من جميع الأزرار
-    document.querySelectorAll('#table-grid .table-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    
-    // إضافة الكلاس selected للزر الحالي
-    event.target.classList.add('selected');
-    
-    // حفظ الرقم المختار
-    selectedTable = num;
-    
-    // عرض الرقم في حقل الإدخال
-    document.getElementById('selected-table-display').innerText = `Tisch ${num}`;
-    
-    console.log("Tisch ausgewählt:", num); // للتأكد من العمل
-}
-
-function selectTakeaway() {
-    // إزالة الكلاس selected من جميع الأزرار
-    document.querySelectorAll('#table-grid .table-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    
-    // حفظ Takeaway
-    selectedTable = 'takeaway';
-    
-    // عرض Takeaway في حقل الإدخال
-    document.getElementById('selected-table-display').innerText = '🥡 Takeaway';
-    
-    console.log("Takeaway ausgewählt"); // للتأكد من العمل
-}
-
-function confirmTableSelection() {
-    if (!selectedTable) {
-        alert("Bitte wählen Sie einen Tisch oder Takeaway!");
-        return;
-    }
-    
-    activeTable = selectedTable;
-    closeModal('modal-table-grid');
-    confirmOrder();
-}
-
-// ========== initiateSend (بدون تغيير) ==========
-function initiateSend() {
-    if(cartNew.length === 0) {
-        alert("Warenkorb leer!");
-        return;
-    }
-    
-    if(activeTable) {
-        confirmOrder();
-    } else {
-        updateFreeTablesDisplay();
-        
-        // إعادة تعيين الاختيار السابق
-        selectedTable = null;
-        document.querySelectorAll('#table-grid .table-btn').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        document.getElementById('selected-table-display').innerText = 'Kein Tisch gewählt';
-        
-        openModal('modal-table-grid');
-    }
-}
-// ========== VERBESSERTE initiateSend ==========
-function initiateSend() { 
-    if(cartNew.length===0) return alert("Warenkorb leer!"); 
-    
-    if(activeTable) {
-        // Prüfe ob der activeTable noch gültig ist (Sicherheitscheck)
-        if (activeTable !== 'takeaway') {
-            db.ref('active_orders/' + activeTable).once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    // Tisch ist inzwischen besetzt! Zurücksetzen
-                    alert(`Tisch ${activeTable} ist inzwischen besetzt! Bitte neu wählen.`);
-                    activeTable = null;
-                    updateFreeTablesDisplay();
-                    openModal('modal-table-grid');
-                } else {
-                    confirmOrder();
-                }
-            });
-        } else {
-            confirmOrder();
-        }
-    } else {
-        // Vor dem Öffnen des Modals die Tische aktualisieren
-        updateFreeTablesDisplay().then(() => {
-            // Setze selectedTable zurück
-            selectedTable = null;
-            document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('selected')); 
-            document.getElementById('selected-table-display').innerText = 'Kein Tisch gewählt';
-            openModal('modal-table-grid');
-        });
-    }
-}
-    // ========== CART ACTIONS ==========
     function addToCart(pid) { const p = products.find(i => i.id == pid); if (!p) return; cartNew.push({...p, tempId: Date.now()+Math.random(), selectedExtras: [], note: "", quantity: 1}); renderCart(); }
     function changeQty(i,d) { if (cartNew[i]) { cartNew[i].quantity = (cartNew[i].quantity||1)+d; if (cartNew[i].quantity<=0) cartNew.splice(i,1); renderCart(); } }
     function removeFromCart(i) { cartNew.splice(i,1); renderCart(); }
-// ========== CART ACTIONS ==========
-function clearFullCart() { 
-    // Prüfen ob überhaupt etwas im Warenkorb ist
-    if(cartNew.length || cartLocked.length) {
-        let message = "Möchten Sie den gesamten Warenkorb löschen?";
-        
-        // Wenn ein Tisch aktiv ist, zusätzliche Info anzeigen
-        if(activeTable) {
-            message = `Möchten Sie den gesamten Warenkorb für ${activeTable === 'takeaway' ? 'Takeaway' : 'Tisch ' + activeTable} löschen?\n\nACHTUNG: Die bestehenden Bestellungen dieses Tisches werden ebenfalls gelöscht!`;
-        }
-        
-        showConfirm(message, () => {
-            cartNew = []; 
-            cartLocked = []; 
-            
-            // Wenn ein Tisch aktiv war, auch die Bestellung aus orders entfernen
-            if(activeTable) {
-                const orderIndex = orders.findIndex(o => o.table == activeTable && o.status === 'open');
-                if (orderIndex !== -1) {
-                    // Bestellung aus Firebase entfernen
-                    db.ref('active_orders/' + activeTable).remove();
-                    // Bestellung aus orders Array entfernen
-                    orders.splice(orderIndex, 1);
-                    save(); // Speichern nicht vergessen!
-                }
-            }
-            
-            activeTable = null; // Tisch deaktivieren
-            renderCart(); // Warenkorb neu zeichnen
-            renderCats(); // Kategorien neu zeichnen (für evtl. Aktualisierung)
-        });
-    }
-}
+    function clearFullCart() { if(cartNew.length || cartLocked.length) { let message = "Möchten Sie den gesamten Warenkorb löschen?"; if(activeTable) message = `Möchten Sie den gesamten Warenkorb für ${activeTable === 'takeaway' ? 'Takeaway' : 'Tisch ' + activeTable} löschen?\n\nACHTUNG: Die bestehenden Bestellungen dieses Tisches werden ebenfalls gelöscht!`; showConfirm(message, () => { cartNew = []; cartLocked = []; if(activeTable) { const orderIndex = orders.findIndex(o => o.table == activeTable && o.status === 'open'); if (orderIndex !== -1) { db.ref('active_orders/' + activeTable).remove(); orders.splice(orderIndex, 1); save(); } } activeTable = null; renderCart(); renderCats(); }); } }
     function resetCart() { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
 
-    // ========== NOTE ==========
     function addNote(idx) { currentNoteIdx = idx; const item = cartNew[idx]; if(item) { document.getElementById('note-item-name').innerText = item.name; document.getElementById('note-text-input').value = item.note || ""; openModal('modal-note'); setTimeout(()=>document.getElementById('note-text-input').focus(),300); } }
     function saveNote() { const t = document.getElementById('note-text-input').value; if (currentNoteIdx!==null && cartNew[currentNoteIdx]) { cartNew[currentNoteIdx].note = t; renderCart(); closeModal('modal-note'); } }
 
-    // ========== EXTRAS ==========
     function openExtraTypeSelector(idx) { currentItemIdx = idx; openModal('modal-extra-type'); }
     function selectExtraType(type) { closeModal('modal-extra-type'); showExtrasList(type==='extras'? extras : zutaten, type==='extras'? 'extra' : 'zutat'); }
-    function showExtrasList(list, type) { const grid = document.getElementById('extras-grid'); document.getElementById('extras-modal-title').innerText = type==='extra'? 'Extras wählen' : 'Zutaten wählen'; grid.innerHTML = list.map(e => `<div class="card cat-card" onclick="selectExtra(${e.id},'${type}')">${e.name} (+${e.price}€)</div>`).join(''); openModal('modal-extras'); }
+    function showExtrasList(list, type) { const grid = document.getElementById('extras-grid'); document.getElementById('extras-modal-title').innerText = type==='extra'? 'Extras wählen' : 'Zutaten wählen'; grid.innerHTML = list.map(e => `<div class="card" onclick="selectExtra(${e.id},'${type}')">${e.name}<br>+${e.price.toFixed(2)}€</div>`).join(''); openModal('modal-extras'); }
     function selectExtra(eid, type) { let ex = (type==='zutat') ? zutaten.find(e=>e.id==eid) : extras.find(e=>e.id==eid); if (ex) { cartNew[currentItemIdx].selectedExtras.push(ex); renderCart(); } closeModal('modal-extras'); }
 
-    // ========== ADMIN FUNCTIONS ==========
-    function addCategory() { 
-        const name = document.getElementById('new-cat-name').value.trim(); 
-        if(name) { 
-            const maxOrder = categories.reduce((max, c) => Math.max(max, c.order || 0), -1) + 1;
-            categories.push({id: Date.now(), name, order: maxOrder}); 
-            save(); 
-            renderCats(); 
-            renderCategoriesAdmin(); 
-            document.getElementById('new-cat-name').value=''; 
-        } 
-    }
-
-    function confirmDelete(type, id) { 
-        let msg=''; 
-        if(type==='category') msg='Kategorie löschen?'; 
-        else if(type==='product') msg='Produkt löschen?'; 
-        else if(type==='extra') msg='Extra löschen?'; 
-        else if(type==='zutat') msg='Zutat löschen?'; 
-        showConfirm(msg, ()=>{ 
-            if(type==='category') { 
-                categories = categories.filter(c=>c.id!==id); 
-                save(); 
-                renderCats(); 
-                renderCategoriesAdmin(); 
-            } else if(type==='product') { 
-                products = products.filter(p=>p.id!==id); 
-                save(); 
-                renderProductsAdmin(); 
-                if(categories[0]) renderProds(categories[0].id); 
-            } else if(type==='extra') { 
-                extras = extras.filter(e=>e.id!==id); 
-                save(); 
-                renderExtrasAdmin(); 
-            } else if(type==='zutat') { 
-                zutaten = zutaten.filter(z=>z.id!==id); 
-                save(); 
-                renderZutatenAdmin(); 
-            } 
-        }); 
-    }
-
-    function openEditModal(type, id, name, price=null) { 
-        editContext = {type, id, name, price}; 
+    function addCategory() { const name = document.getElementById('new-cat-name').value.trim(); if(name) { const maxOrder = categories.reduce((max, c) => Math.max(max, c.order || 0), -1) + 1; categories.push({id: Date.now(), name, order: maxOrder}); save(); renderCats(); renderCategoriesAdmin(); document.getElementById('new-cat-name').value=''; } }
+    function confirmDelete(type, id) { let msg=''; if(type==='category') msg='Kategorie löschen?'; else if(type==='product') msg='Produkt löschen?'; else if(type==='extra') msg='Extra löschen?'; else if(type==='zutat') msg='Zutat löschen?'; showConfirm(msg, ()=>{ if(type==='category') { categories = categories.filter(c=>c.id!==id); save(); renderCats(); renderCategoriesAdmin(); } else if(type==='product') { products = products.filter(p=>p.id!==id); save(); renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); } else if(type==='extra') { extras = extras.filter(e=>e.id!==id); save(); renderExtrasAdmin(); } else if(type==='zutat') { zutaten = zutaten.filter(z=>z.id!==id); save(); renderZutatenAdmin(); } }); }
+    
+    function openEditModal(type, id, name, price=null, ingredients='', instructions='') { 
+        editContext = {type, id, name, price, ingredients, instructions}; 
         document.getElementById('edit-title').innerText = type==='category'? 'Kategorie bearbeiten' : (type==='product'? 'Produkt bearbeiten' : (type==='extra'? 'Extra bearbeiten' : 'Zutat bearbeiten')); 
         document.getElementById('edit-input').value = name; 
         const priceInput = document.getElementById('edit-price'); 
-        if (type==='product'||type==='extra'||type==='zutat') { 
+        const ingredientsInput = document.getElementById('edit-recipe-ingredients');
+        const instructionsInput = document.getElementById('edit-recipe-instructions');
+        if (type==='product') { 
             priceInput.style.display='block'; 
             priceInput.value = price||0; 
-        } else priceInput.style.display='none'; 
+            ingredientsInput.style.display='block';
+            instructionsInput.style.display='block';
+            ingredientsInput.value = ingredients || '';
+            instructionsInput.value = instructions || '';
+        } else { 
+            priceInput.style.display='none';
+            ingredientsInput.style.display='none';
+            instructionsInput.style.display='none';
+            if (type==='extra'||type==='zutat') { priceInput.style.display='block'; priceInput.value = price||0; }
+        } 
         openModal('modal-edit'); 
     }
 
@@ -2048,21 +1194,20 @@ function clearFullCart() {
         if (!newName) return alert("Name leer!"); 
         if (editContext.type === 'category') { 
             const cat = categories.find(c=>c.id===editContext.id); 
-            if (cat) { 
-                cat.name = newName; 
-                save(); 
-                renderCats(); 
-                renderCategoriesAdmin(); 
-            } 
+            if (cat) { cat.name = newName; save(); renderCats(); renderCategoriesAdmin(); } 
         } else if (editContext.type === 'product') { 
             const newPrice = parseFloat(document.getElementById('edit-price').value); 
             if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
+            const newIngredients = document.getElementById('edit-recipe-ingredients').value;
+            const newInstructions = document.getElementById('edit-recipe-instructions').value;
             const prod = products.find(p=>p.id===editContext.id); 
             if (prod) { 
                 prod.name = newName; 
-                prod.price = newPrice; 
+                prod.price = newPrice;
+                prod.recipeIngredients = newIngredients;
+                prod.recipeInstructions = newInstructions;
                 save(); 
-                cartNew = cartNew.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price} : item); 
+                cartNew = cartNew.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, recipeIngredients:prod.recipeIngredients, recipeInstructions:prod.recipeInstructions} : item); 
                 cartLocked = cartLocked.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price} : item); 
                 renderCart(); 
                 renderProductsAdmin(); 
@@ -2072,22 +1217,12 @@ function clearFullCart() {
             const newPrice = parseFloat(document.getElementById('edit-price').value); 
             if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
             const extra = extras.find(e=>e.id===editContext.id); 
-            if (extra) { 
-                extra.name = newName; 
-                extra.price = newPrice; 
-                save(); 
-                renderExtrasAdmin(); 
-            } 
+            if (extra) { extra.name = newName; extra.price = newPrice; save(); renderExtrasAdmin(); } 
         } else if (editContext.type === 'zutat') { 
             const newPrice = parseFloat(document.getElementById('edit-price').value); 
             if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
             const zutat = zutaten.find(z=>z.id===editContext.id); 
-            if (zutat) { 
-                zutat.name = newName; 
-                zutat.price = newPrice; 
-                save(); 
-                renderZutatenAdmin(); 
-            } 
+            if (zutat) { zutat.name = newName; zutat.price = newPrice; save(); renderZutatenAdmin(); } 
         } 
         closeModal('modal-edit'); 
     }
@@ -2098,7 +1233,7 @@ function clearFullCart() {
         const cat = parseInt(document.getElementById('p-cat-select').value); 
         if(name && price>=0) { 
             const maxOrder = products.filter(p => p.catId == cat).reduce((max, p) => Math.max(max, p.order || 0), -1) + 1;
-            products.push({id:Date.now(), catId:cat, name, price, order: maxOrder}); 
+            products.push({id:Date.now(), catId:cat, name, price, order: maxOrder, recipeIngredients: '', recipeInstructions: ''}); 
             save(); 
             renderProductsAdmin(); 
             renderProds(cat); 
@@ -2109,138 +1244,28 @@ function clearFullCart() {
 
     function addExtra(type) { 
         let name, price; 
-        if (type==='extra') { 
-            name = document.getElementById('ex-name').value.trim(); 
-            price = parseFloat(document.getElementById('ex-price').value); 
-        } else { 
-            name = document.getElementById('zut-name').value.trim(); 
-            price = parseFloat(document.getElementById('zut-price').value); 
-        } 
+        if (type==='extra') { name = document.getElementById('ex-name').value.trim(); price = parseFloat(document.getElementById('ex-price').value); } 
+        else { name = document.getElementById('zut-name').value.trim(); price = parseFloat(document.getElementById('zut-price').value); } 
         if(name && !isNaN(price) && price>=0) { 
             const arr = type==='extra' ? extras : zutaten;
             const maxOrder = arr.reduce((max, e) => Math.max(max, e.order || 0), -1) + 1;
             const newItem = {id:Date.now(), name, price, order: maxOrder}; 
-            if (type==='extra') { 
-                extras.push(newItem); 
-                renderExtrasAdmin(); 
-                document.getElementById('ex-name').value=''; 
-                document.getElementById('ex-price').value=''; 
-            } else { 
-                zutaten.push(newItem); 
-                renderZutatenAdmin(); 
-                document.getElementById('zut-name').value=''; 
-                document.getElementById('zut-price').value=''; 
-            } 
+            if (type==='extra') { extras.push(newItem); renderExtrasAdmin(); document.getElementById('ex-name').value=''; document.getElementById('ex-price').value=''; } 
+            else { zutaten.push(newItem); renderZutatenAdmin(); document.getElementById('zut-name').value=''; document.getElementById('zut-price').value=''; } 
             save(); 
         } else alert("Bitte gültige Daten!"); 
     }
 
-    // ========== ORDER FUNCTIONS ==========
-    // ========== FUNKTION ZUM AKTUALISIEREN DER FREIEN TISCHE ==========
-function updateFreeTablesDisplay() {
-    // Lade alle aktiven Bestellungen von Firebase
-    db.ref('active_orders').once('value', (snapshot) => {
-        const occupiedTables = [];
-        
-        // Sammle alle besetzten Tische
-        snapshot.forEach((tableSnapshot) => {
-            const tableNum = tableSnapshot.key;
-            // Takeaway ist kein Tisch, also ignorieren wir ihn hier
-            if (tableNum !== 'takeaway') {
-                occupiedTables.push(tableNum);
-            }
-        });
-        
-        // Aktualisiere die Tisch-Buttons im Grid
-        const tableButtons = document.querySelectorAll('#table-grid .table-btn');
-        
-        tableButtons.forEach(btn => {
-            const tableNum = btn.textContent; // Der Button-Text ist die Tischnummer
-            
-            if (occupiedTables.includes(tableNum)) {
-                btn.style.display = 'none'; // Besetzte Tische verstecken
-            } else {
-                btn.style.display = 'inline-block'; // Freie Tische zeigen
-            }
-        });
-        
-        // Prüfe ob es überhaupt freie Tische gibt
-        const freeTablesCount = Array.from(tableButtons).filter(btn => btn.style.display !== 'none').length;
-        
-        if (freeTablesCount === 0) {
-            // فقط رسالة تحذيرية، لا تحذف الأزرار
-            alert('Keine freien Tische verfügbar! Nur Takeaway möglich.');
-            
-            // تأكد أن Takeaway لا يزال ظاهراً (هو ليس في grid الأرقام)
-            // لا تغير محتوى grid أبداً!
-        }
-    });
-}
-// ========== VERBESSERTE initiateSend FUNKTION ==========
-function initiateSend() { 
-    if(cartNew.length===0) return alert("Warenkorb leer!"); 
-    
-    if(activeTable) {
-        confirmOrder(); 
-    } else {
-        // Vor dem Öffnen des Modals die Tische aktualisieren
-        updateFreeTablesDisplay();
-        openModal('modal-table-grid'); 
-    }
-}
-    function confirmOrder() { 
-        const tNum = activeTable; 
-        if(!tNum) return alert("Tisch fehlt!"); 
-        const newBatch = { 
-            batchId: Date.now(), 
-            time: new Date().toLocaleTimeString(), 
-            date: new Date().toLocaleDateString(), 
-            items: [...cartNew], 
-            status: 'new' 
-        }; 
-        db.ref('active_orders/' + tNum).push(newBatch)
-        .then(() => { 
-            let existing = orders.find(o => o.table == tNum && o.status === 'open'); 
-            if (existing) { 
-                existing.batches.push(newBatch); 
-            } else { 
-                orders.push({ 
-                    id: Date.now(), 
-                    table: tNum, 
-                    status: 'open', 
-                    batches: [newBatch] 
-                }); 
-            } 
-            save(); 
-            db.ref('notifications/kitchen').set({ timestamp: Date.now() }); 
-            showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet`); 
-            resetCart(); 
-            closeModal('modal-table-grid'); 
-        }).catch(e => { console.error(e); alert("Fehler!"); }); 
-    }
-
-    function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
-    function loadTable(tNum) { const order = orders.find(o => o.table == tNum && o.status == 'open'); if (!order) return; activeTable = tNum; cartLocked = []; order.batches.forEach(b => cartLocked.push(...b.items)); cartNew = []; renderCart(); closeModal('modal-tables'); }
-
-    // ========== CONFIRM HELPER ==========
     function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
 
     init();
-// Service Worker registrieren
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('ServiceWorker registriert:', registration.scope);
-      })
-      .catch(error => {
-        console.log('ServiceWorker Registrierung fehlgeschlagen:', error);
-      });
-  });
-}
 
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => { console.log('ServiceWorker registriert:', registration.scope); }).catch(error => { console.log('ServiceWorker Registrierung fehlgeschlagen:', error); });
+        });
+    }
 </script>
-
 </body>
 </html>
