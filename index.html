@@ -952,13 +952,70 @@
     function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
     function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
 
-    function openTables() { const grid = document.getElementById('tables-grid'); const openOrders = orders.filter(o => o.status === 'open'); grid.innerHTML = openOrders.map(o => { let lastTime = ''; if (o.batches && o.batches.length > 0) { const lastBatch = o.batches[o.batches.length - 1]; lastTime = lastBatch.time || ''; } return `<div class="table-box"><h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3><small>${lastTime ? '🕒 ' + lastTime : ''}</small><div style="margin-top: 10px;"><button onclick="event.stopPropagation(); loadTable('${o.table}')">Edit</button><button onclick="event.stopPropagation(); showOrder('${o.table}')">Show</button><button onclick="event.stopPropagation(); payTable(${o.id})" style="background:var(--green);">Pay</button><button onclick="event.stopPropagation(); confirmDeleteTableFromCard('${o.table}')" style="background:var(--red);">Löschen</button></div></div>`; }).join('') || "Keine aktiven Tische"; openModal('modal-tables'); }
+    function openTables() { 
+        const grid = document.getElementById('tables-grid'); 
+        const openOrders = orders.filter(o => o.status === 'open'); 
+        grid.innerHTML = openOrders.map(o => { 
+            let lastTime = ''; 
+            if (o.batches && o.batches.length > 0) { 
+                const lastBatch = o.batches[o.batches.length - 1]; 
+                lastTime = lastBatch.time || ''; 
+            } 
+            return `<div class="table-box"><h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3><small>${lastTime ? '🕒 ' + lastTime : ''}</small><div style="margin-top: 10px;"><button onclick="event.stopPropagation(); showOrderAndCloseTables('${o.table}')">Show</button><button onclick="event.stopPropagation(); payTableAndCloseTables(${o.id})" style="background:var(--green);">Pay</button><button onclick="event.stopPropagation(); confirmDeleteTableFromCardAndCloseTables('${o.table}')" style="background:var(--red);">Löschen</button></div></div>`; 
+        }).join('') || "Keine aktiven Tische"; 
+        openModal('modal-tables'); 
+    }
+
+    // Neue Funktionen für Tables Modal
+    function showOrderAndCloseTables(tableId) {
+        closeModal('modal-tables');
+        showOrder(tableId);
+    }
+    
+    function payTableAndCloseTables(oid) {
+        closeModal('modal-tables');
+        payTable(oid);
+    }
+    
+    function confirmDeleteTableFromCardAndCloseTables(tableId) {
+        closeModal('modal-tables');
+        currentShowTable = tableId;
+        showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { 
+            const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); 
+            if (orderIndex !== -1) { 
+                const order = orders[orderIndex]; 
+                order.status = 'paid'; 
+                order.paidTime = Date.now(); 
+                const salesOrder = JSON.parse(JSON.stringify(order)); 
+                sales.push(salesOrder); 
+                orders.splice(orderIndex, 1); 
+                save(); 
+                db.ref('active_orders/' + tableId).remove(); 
+                openTables(); 
+            } 
+        });
+    }
 
     function payTable(oid) { const order = orders.find(o => o.id == oid); window.currentPayId = oid; let total = 0; if (order.batches) { order.batches.forEach(b => { if (b.items) { b.items.forEach(i => { const itemPrice = i.price || 0; const extrasPrice = i.selectedExtras ? i.selectedExtras.reduce((s,e) => s + (e.price || 0), 0) : 0; total += (itemPrice + extrasPrice) * (i.quantity || 1); }); } }); } document.getElementById('pay-amount').innerText = total.toFixed(2) + " €"; document.getElementById('pay-title').innerText = order.table === 'takeaway' ? 'Takeaway' : "Tisch " + order.table; openModal('modal-pay'); }
     function processPay(method) { const order = orders.find(o => o.id == window.currentPayId); if (!order) return; order.status = 'paid'; order.payMethod = method; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders = orders.filter(o => o.id !== order.id); save(); db.ref('active_orders/' + order.table).remove(); showToast("Bezahlt mit " + method); if(activeTable == order.table) resetCart(); closeModal('modal-pay'); openTables(); }
 
-    function confirmDeleteTable() { showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); if (idx !== -1) { const order = orders[idx]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(idx, 1); save(); db.ref('active_orders/' + currentShowTable).remove(); closeModal('modal-show-order'); openTables(); } }); }
-    function confirmDeleteTableFromCard(tableId) { currentShowTable = tableId; showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); if (orderIndex !== -1) { const order = orders[orderIndex]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(orderIndex, 1); save(); db.ref('active_orders/' + tableId).remove(); openTables(); } }); }
+    function confirmDeleteTable() { 
+        showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { 
+            const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); 
+            if (idx !== -1) { 
+                const order = orders[idx]; 
+                order.status = 'paid'; 
+                order.paidTime = Date.now(); 
+                const salesOrder = JSON.parse(JSON.stringify(order)); 
+                sales.push(salesOrder); 
+                orders.splice(idx, 1); 
+                save(); 
+                db.ref('active_orders/' + currentShowTable).remove(); 
+                closeModal('modal-show-order'); 
+                openTables(); 
+            } 
+        }); 
+    }
 
     function openKitchen() { openModal('modal-kitchen'); const container = document.getElementById('kitchen-content'); container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>"; db.ref('active_orders').on('value', (snapshot) => { const allData = snapshot.val(); if (!allData) { container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>"; return; } let allOrders = []; Object.entries(allData).forEach(([tNum, batches]) => { Object.entries(batches).forEach(([bId, batch]) => { allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000 }); }); }); allOrders.sort((a, b) => b.timestamp - a.timestamp); let html = ""; allOrders.forEach(order => { const lateClass = order.isLate ? "late-blink" : ""; html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; }); container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; }); }
     function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
