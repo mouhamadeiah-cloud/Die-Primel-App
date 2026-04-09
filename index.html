@@ -610,6 +610,72 @@
         .stats-table th { background: var(--dark); color: white; padding: 1vh; position: sticky; top: 0; }
         .stats-table td { padding: 1vh; border-bottom: 1px solid #ddd; }
 
+        /* ========== FLOATING MIC BUTTON ========== */
+        .fab-mic {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fab-mic:hover { transform: scale(1.05); }
+        .fab-mic.recording {
+            background: #ff0000;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(231,76,60,0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+        }
+        
+        /* Mic Popup */
+        .mic-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 25px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+            min-width: 280px;
+            text-align: center;
+            border-left: 4px solid #e74c3c;
+        }
+        .mic-popup p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        .mic-popup .transcript {
+            font-weight: bold;
+            color: var(--dark);
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .mic-popup .close-popup {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            float: right;
+            color: var(--red);
+        }
+
         @media (orientation: landscape) { header { height: 15vh; } }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -650,6 +716,9 @@
         </div>
     </section>
 </main>
+
+<!-- Floating Mic Button -->
+<button id="fab-mic" class="fab-mic" title="Sprachbestellung">🎤</button>
 
 <!-- Recipe View Modal -->
 <div id="modal-recipe-view" class="modal">
@@ -856,8 +925,18 @@
 <!-- Pay Modal -->
 <div id="modal-pay" class="modal"><div class="modal-content" style="max-width:400px; text-align:center"><button class="close" onclick="closeModal('modal-pay')">&times;</button><h2 id="pay-title">Zahlung</h2><h1 id="pay-amount" style="font-size:50px">0.00 €</h1><button class="btn-main" style="background:var(--green)" onclick="processPay('Bar')">BAR</button><button class="btn-main" style="background:var(--blue)" onclick="processPay('Karte')">KARTE</button></div></div>
 
-<!-- Note Modal -->
-<div id="modal-note" class="modal"><div class="modal-content" style="max-width:400px; text-align:center;"><button class="close" onclick="closeModal('modal-note')">&times;</button><h3>Notiz für <span id="note-item-name"></span></h3><textarea id="note-text-input" rows="4" style="width:100%; padding:2vh; border-radius:10px; border:1px solid #ccc; font-size:clamp(1rem,2.5vh,1.2rem); margin-bottom:2vh;" placeholder="Schreiben Sie hier..."></textarea><button class="btn-main" style="background:var(--green)" onclick="saveNote()">SPEICHERN</button></div></div>
+<!-- Note Modal with Mic Button -->
+<div id="modal-note" class="modal">
+    <div class="modal-content" style="max-width:400px; text-align:center;">
+        <button class="close" onclick="closeModal('modal-note')">&times;</button>
+        <h3>Notiz für <span id="note-item-name"></span></h3>
+        <div style="position: relative;">
+            <textarea id="note-text-input" rows="4" style="width:100%; padding:2vh; border-radius:10px; border:1px solid #ccc; font-size:clamp(1rem,2.5vh,1.2rem); margin-bottom:2vh; padding-right: 45px;"></textarea>
+            <button id="note-mic-btn" style="position: absolute; bottom: 18px; right: 10px; background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🎤</button>
+        </div>
+        <button class="btn-main" style="background:var(--green)" onclick="saveNote()">SPEICHERN</button>
+    </div>
+</div>
 
 <script>
     // ========== FIREBASE CONFIG ==========
@@ -876,6 +955,18 @@
 
     const KITCHEN_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
     const WAITER_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3';
+
+    // ============================================================
+    // 🔴🔴🔴 IMPORTANT: PUT YOUR GEMINI API KEY HERE 🔴🔴🔴
+    // ============================================================
+    // 1. Go to: https://aistudio.google.com/app/apikey
+    // 2. Sign in with your Google account
+    // 3. Click "Create API Key"
+    // 4. Copy the key and paste it below
+    // ============================================================
+    const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // 🔴 اكتب مفتاحك هنا 🔴
+    // ============================================================
+    const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
 
     function playSound(url) { const audio = new Audio(url); audio.play().catch(e => console.log('Audio play failed:', e)); }
     function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
@@ -900,6 +991,255 @@
     let editContext = { type: null, id: null, name: '', price: null, ingredients: '', instructions: '' };
     let currentShowTable = null;
     let currentPin = '';
+    
+    // Speech Recognition
+    let recognition = null;
+    let isRecording = false;
+
+    function initSpeechRecognition() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.warn("Speech recognition not supported");
+            return null;
+        }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognitionInstance = new SpeechRecognition();
+        recognitionInstance.lang = 'de-DE';
+        recognitionInstance.continuous = false;
+        recognitionInstance.interimResults = false;
+        recognitionInstance.maxAlternatives = 1;
+        return recognitionInstance;
+    }
+
+    // ========== GEMINI PROMPT ==========
+    const SYSTEM_PROMPT_SIMPLE = `أنت مساعد ذكي لمطعم "Die Primel". مهمتك: استخراج اسم الطبق والكمية فقط من كلام النادل.
+
+القائمة المتوفرة:
+${products.map(p => `- ${p.name}`).join('\n')}
+
+القواعد:
+1. استخرج اسم الطبق (الأقرب لما في القائمة)
+2. استخرج الكمية (إذا لم يحددها المستخدم، اجعلها 1)
+3. كل ما تبقى من الكلام (إضافات، تعليمات، ملاحظات) ضعه في حقل "note" كما هو
+4. إذا كان هناك أكثر من طبق في الجملة، قسّمها إلى عناصر متعددة
+
+أخرج JSON فقط بالصيغة:
+{"items":[{"productName":"اسم الطبق","quantity":2,"note":"النص الكامل المتبقي"}]}
+
+إذا لم تجد أي طبق، أخرج:
+{"type":"not_found","message":"لم أجد الطبق. حاول مرة أخرى."}`;
+
+    async function processVoiceCommandWithGemini(transcript) {
+        const currentProducts = products.map(p => ({ name: p.name, id: p.id }));
+        
+        const prompt = `القائمة: ${JSON.stringify(currentProducts)}
+أمر النادل: "${transcript}"
+أخرج JSON حسب القواعد.`;
+
+        try {
+            const response = await fetch(GEMINI_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
+                    systemInstruction: { parts: [{ text: SYSTEM_PROMPT_SIMPLE }] }
+                })
+            });
+            
+            const data = await response.json();
+            if (data.error) {
+                console.error("Gemini API Error:", data.error);
+                return { type: "error", message: "API Fehler: " + (data.error.message || "Unbekannt") };
+            }
+            const jsonText = data.candidates[0].content.parts[0].text;
+            const result = JSON.parse(jsonText);
+            return result;
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            return { type: "error", message: "Verbindungsfehler. Versuche es später erneut." };
+        }
+    }
+
+    async function addVoiceOrderToCart(transcript) {
+        showToast("🔄 Wird verarbeitet...");
+        const result = await processVoiceCommandWithGemini(transcript);
+        
+        if (result.type === "not_found") {
+            showToast(`❌ ${result.message}`);
+            return false;
+        }
+        
+        if (result.type === "error") {
+            showToast(`❌ ${result.message}`);
+            return false;
+        }
+        
+        if (result.items && result.items.length > 0) {
+            let addedCount = 0;
+            result.items.forEach(item => {
+                const product = products.find(p => p.name === item.productName);
+                if (product) {
+                    for (let i = 0; i < item.quantity; i++) {
+                        cartNew.push({
+                            ...product,
+                            selectedExtras: [],
+                            note: item.note || "",
+                            quantity: 1
+                        });
+                        addedCount++;
+                    }
+                } else {
+                    // Try fuzzy match
+                    const similar = products.find(p => p.name.toLowerCase().includes(item.productName.toLowerCase()) || 
+                                                      item.productName.toLowerCase().includes(p.name.toLowerCase()));
+                    if (similar) {
+                        for (let i = 0; i < item.quantity; i++) {
+                            cartNew.push({
+                                ...similar,
+                                selectedExtras: [],
+                                note: item.note || "",
+                                quantity: 1
+                            });
+                            addedCount++;
+                        }
+                    }
+                }
+            });
+            renderCart();
+            showToast(`✅ ${addedCount} Artikel zur Kasse hinzugefügt`);
+            return true;
+        }
+        
+        showToast("❌ Konnte den Befehl nicht verarbeiten");
+        return false;
+    }
+
+    function startVoiceRecording() {
+        if (!recognition) {
+            recognition = initSpeechRecognition();
+            if (!recognition) {
+                showToast("❌ Sprachaufnahme wird von Ihrem Browser nicht unterstützt");
+                return;
+            }
+            
+            recognition.onresult = async (event) => {
+                const transcript = event.results[0][0].transcript;
+                showFloatingMicPopup(transcript);
+                await addVoiceOrderToCart(transcript);
+                stopVoiceRecording();
+            };
+            
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                showToast("❌ Fehler bei der Spracherkennung: " + event.error);
+                stopVoiceRecording();
+            };
+            
+            recognition.onend = () => {
+                stopVoiceRecording();
+            };
+        }
+        
+        try {
+            recognition.start();
+            isRecording = true;
+            const micBtn = document.getElementById('fab-mic');
+            micBtn.classList.add('recording');
+            micBtn.innerHTML = "🔴";
+            showToast("🎤 Höre zu... Sprechen Sie jetzt");
+        } catch (e) {
+            console.error("Start error:", e);
+        }
+    }
+    
+    function stopVoiceRecording() {
+        if (recognition) {
+            try {
+                recognition.stop();
+            } catch(e) {}
+        }
+        isRecording = false;
+        const micBtn = document.getElementById('fab-mic');
+        micBtn.classList.remove('recording');
+        micBtn.innerHTML = "🎤";
+    }
+    
+    function showFloatingMicPopup(transcript) {
+        let popup = document.querySelector('.mic-popup');
+        if (popup) popup.remove();
+        
+        popup = document.createElement('div');
+        popup.className = 'mic-popup';
+        popup.innerHTML = `
+            <button class="close-popup">✕</button>
+            <p>🎤 Gesagt:</p>
+            <div class="transcript">"${transcript}"</div>
+            <p style="font-size:0.8rem; color:green; margin-top:8px;">✅ Zur Kasse hinzugefügt</p>
+        `;
+        document.body.appendChild(popup);
+        
+        popup.querySelector('.close-popup').onclick = () => popup.remove();
+        setTimeout(() => { if(popup) popup.remove(); }, 4000);
+    }
+
+    // ========== NOTE MIC FUNCTION ==========
+    function initNoteMic() {
+        const noteMicBtn = document.getElementById('note-mic-btn');
+        if (!noteMicBtn) return;
+        
+        let noteRecognition = null;
+        let isNoteRecording = false;
+        
+        noteMicBtn.onclick = () => {
+            if (isNoteRecording) {
+                if (noteRecognition) noteRecognition.stop();
+                return;
+            }
+            
+            if (!noteRecognition) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    showToast("❌ Sprachaufnahme nicht unterstützt");
+                    return;
+                }
+                noteRecognition = new SpeechRecognition();
+                noteRecognition.lang = 'de-DE';
+                noteRecognition.continuous = false;
+                noteRecognition.interimResults = false;
+                
+                noteRecognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const textarea = document.getElementById('note-text-input');
+                    const currentText = textarea.value;
+                    textarea.value = currentText ? currentText + " " + transcript : transcript;
+                    showToast("📝 Text hinzugefügt");
+                    isNoteRecording = false;
+                    noteMicBtn.innerHTML = "🎤";
+                    noteMicBtn.style.background = "#e74c3c";
+                };
+                
+                noteRecognition.onerror = () => {
+                    isNoteRecording = false;
+                    noteMicBtn.innerHTML = "🎤";
+                    noteMicBtn.style.background = "#e74c3c";
+                };
+                
+                noteRecognition.onend = () => {
+                    isNoteRecording = false;
+                    noteMicBtn.innerHTML = "🎤";
+                    noteMicBtn.style.background = "#e74c3c";
+                };
+            }
+            
+            try {
+                noteRecognition.start();
+                isNoteRecording = true;
+                noteMicBtn.innerHTML = "🔴";
+                noteMicBtn.style.background = "#ff0000";
+                showToast("🎤 Sprechen Sie Ihre Notiz...");
+            } catch(e) {}
+        };
+    }
 
     function ensureOrders() {
         categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
@@ -911,10 +1251,7 @@
     function openModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'block'; } }
     function closeModal(id) { 
         const modal = document.getElementById(id); 
-        if(modal) { 
-            modal.style.display = 'none'; 
-        }
-        // Stop tables listener when closing tables modal
+        if(modal) { modal.style.display = 'none'; }
         if (id === 'modal-tables' && window.tablesListenerRef) {
             db.ref('active_orders').off('value', window.tablesListenerRef);
             window.tablesListenerRef = null;
@@ -962,11 +1299,9 @@
     function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
     function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
 
-    // ========== UPDATED TABLES FUNCTIONS WITH REAL-TIME LISTENER ==========
     function updateTablesGrid() {
         const grid = document.getElementById('tables-grid');
         if (!grid) return;
-        
         const openOrders = orders.filter(o => o.status === 'open');
         grid.innerHTML = openOrders.map(o => {
             let lastTime = '';
@@ -990,11 +1325,9 @@
         if (window.tablesListenerRef) {
             db.ref('active_orders').off('value', window.tablesListenerRef);
         }
-        
         window.tablesListenerRef = (snapshot) => {
             const tablesModal = document.getElementById('modal-tables');
             if (tablesModal && tablesModal.style.display === 'block') {
-                // Reload orders from Firebase and update
                 db.ref('data').once('value', (dataSnapshot) => {
                     const data = dataSnapshot.val();
                     if (data && data.orders) {
@@ -1005,72 +1338,25 @@
                 });
             }
         };
-        
         db.ref('active_orders').on('value', window.tablesListenerRef);
     }
 
-    function openTables() { 
-        updateTablesGrid();
-        openModal('modal-tables'); 
-        startTablesListener();
-    }
-
-    function showOrderAndCloseTables(tableId) {
-        closeModal('modal-tables');
-        showOrder(tableId);
-    }
-    
-    function payTableAndCloseTables(oid) {
-        closeModal('modal-tables');
-        payTable(oid);
-    }
-    
-    function confirmDeleteTableFromCardAndCloseTables(tableId) {
-        closeModal('modal-tables');
-        currentShowTable = tableId;
-        showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { 
-            const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); 
-            if (orderIndex !== -1) { 
-                const order = orders[orderIndex]; 
-                order.status = 'paid'; 
-                order.paidTime = Date.now(); 
-                const salesOrder = JSON.parse(JSON.stringify(order)); 
-                sales.push(salesOrder); 
-                orders.splice(orderIndex, 1); 
-                save(); 
-                db.ref('active_orders/' + tableId).remove(); 
-                openTables(); 
-            } 
-        });
-    }
+    function openTables() { updateTablesGrid(); openModal('modal-tables'); startTablesListener(); }
+    function showOrderAndCloseTables(tableId) { closeModal('modal-tables'); showOrder(tableId); }
+    function payTableAndCloseTables(oid) { closeModal('modal-tables'); payTable(oid); }
+    function confirmDeleteTableFromCardAndCloseTables(tableId) { closeModal('modal-tables'); currentShowTable = tableId; showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); if (orderIndex !== -1) { const order = orders[orderIndex]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(orderIndex, 1); save(); db.ref('active_orders/' + tableId).remove(); openTables(); } }); }
 
     function payTable(oid) { const order = orders.find(o => o.id == oid); window.currentPayId = oid; let total = 0; if (order.batches) { order.batches.forEach(b => { if (b.items) { b.items.forEach(i => { const itemPrice = i.price || 0; const extrasPrice = i.selectedExtras ? i.selectedExtras.reduce((s,e) => s + (e.price || 0), 0) : 0; total += (itemPrice + extrasPrice) * (i.quantity || 1); }); } }); } document.getElementById('pay-amount').innerText = total.toFixed(2) + " €"; document.getElementById('pay-title').innerText = order.table === 'takeaway' ? 'Takeaway' : "Tisch " + order.table; openModal('modal-pay'); }
     function processPay(method) { const order = orders.find(o => o.id == window.currentPayId); if (!order) return; order.status = 'paid'; order.payMethod = method; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders = orders.filter(o => o.id !== order.id); save(); db.ref('active_orders/' + order.table).remove(); showToast("Bezahlt mit " + method); if(activeTable == order.table) resetCart(); closeModal('modal-pay'); openTables(); }
 
-    function confirmDeleteTable() { 
-        showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { 
-            const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); 
-            if (idx !== -1) { 
-                const order = orders[idx]; 
-                order.status = 'paid'; 
-                order.paidTime = Date.now(); 
-                const salesOrder = JSON.parse(JSON.stringify(order)); 
-                sales.push(salesOrder); 
-                orders.splice(idx, 1); 
-                save(); 
-                db.ref('active_orders/' + currentShowTable).remove(); 
-                closeModal('modal-show-order'); 
-                openTables(); 
-            } 
-        }); 
-    }
+    function confirmDeleteTable() { showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); if (idx !== -1) { const order = orders[idx]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(idx, 1); save(); db.ref('active_orders/' + currentShowTable).remove(); closeModal('modal-show-order'); openTables(); } }); }
 
     function openKitchen() { openModal('modal-kitchen'); const container = document.getElementById('kitchen-content'); container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>"; db.ref('active_orders').on('value', (snapshot) => { const allData = snapshot.val(); if (!allData) { container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>"; return; } let allOrders = []; Object.entries(allData).forEach(([tNum, batches]) => { Object.entries(batches).forEach(([bId, batch]) => { allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000 }); }); }); allOrders.sort((a, b) => b.timestamp - a.timestamp); let html = ""; allOrders.forEach(order => { const lateClass = order.isLate ? "late-blink" : ""; html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; }); container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; }); }
     function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
 
     function showOrder(tableId) { const order = orders.find(o => o.table == tableId && o.status === 'open'); if (!order) return alert("Keine offene Bestellung"); currentShowTable = tableId; let itemsHtml = ''; let total = 0; order.batches.forEach(batch => { batch.items.forEach(item => { let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); let qty = item.quantity || 1; total += itemPrice * qty; itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span>${(itemPrice * qty).toFixed(2)}€</span></div>`; if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`; }); }); document.getElementById('show-order-items').innerHTML = itemsHtml; document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €'; document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`; openModal('modal-show-order'); }
 
-    function init() { ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); }
+    function init() { ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); initNoteMic(); }
     function loadFromFirebase() { db.ref('data').once('value', (snapshot) => { const data = snapshot.val(); if (data && data.categories) { categories = data.categories || []; products = data.products || []; extras = data.extras || []; zutaten = data.zutaten || []; orders = data.orders || []; sales = data.sales || []; } ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); }); }
     function saveToFirebase() { db.ref('data').set({ categories, products, extras, zutaten, orders, sales }); }
     function save() { localStorage.setItem('cats', JSON.stringify(categories)); localStorage.setItem('prods', JSON.stringify(products)); localStorage.setItem('extras', JSON.stringify(extras)); localStorage.setItem('zutaten', JSON.stringify(zutaten)); localStorage.setItem('orders', JSON.stringify(orders)); localStorage.setItem('sales', JSON.stringify(sales)); saveToFirebase(); }
@@ -1131,7 +1417,6 @@
         document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb"; 
     }
 
-    // ========== ARROW FUNCTIONS ==========
     function moveUp(type, id) { 
         if (type === 'category') {
             const index = categories.findIndex(item => item.id === id);
@@ -1363,6 +1648,15 @@
 
     function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
+
+    // Initialize FAB Mic
+    document.getElementById('fab-mic').onclick = () => {
+        if (isRecording) {
+            stopVoiceRecording();
+        } else {
+            startVoiceRecording();
+        }
+    };
 
     init();
 
