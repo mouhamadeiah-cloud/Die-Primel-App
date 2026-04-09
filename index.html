@@ -909,7 +909,17 @@
     }
 
     function openModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'block'; } }
-    function closeModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'none'; } }
+    function closeModal(id) { 
+        const modal = document.getElementById(id); 
+        if(modal) { 
+            modal.style.display = 'none'; 
+        }
+        // Stop tables listener when closing tables modal
+        if (id === 'modal-tables' && window.tablesListenerRef) {
+            db.ref('active_orders').off('value', window.tablesListenerRef);
+            window.tablesListenerRef = null;
+        }
+    }
 
     function showLoginModal() { currentPin = ''; updatePinDisplay(); openModal('modal-login'); }
     function updatePinDisplay() { document.getElementById('pin-display').textContent = currentPin.padStart(4, '•'); }
@@ -952,21 +962,59 @@
     function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
     function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
 
-    function openTables() { 
-        const grid = document.getElementById('tables-grid'); 
-        const openOrders = orders.filter(o => o.status === 'open'); 
-        grid.innerHTML = openOrders.map(o => { 
-            let lastTime = ''; 
-            if (o.batches && o.batches.length > 0) { 
-                const lastBatch = o.batches[o.batches.length - 1]; 
-                lastTime = lastBatch.time || ''; 
-            } 
-            return `<div class="table-box"><h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3><small>${lastTime ? '🕒 ' + lastTime : ''}</small><div style="margin-top: 10px;"><button onclick="event.stopPropagation(); showOrderAndCloseTables('${o.table}')">Show</button><button onclick="event.stopPropagation(); payTableAndCloseTables(${o.id})" style="background:var(--green);">Pay</button><button onclick="event.stopPropagation(); confirmDeleteTableFromCardAndCloseTables('${o.table}')" style="background:var(--red);">Löschen</button></div></div>`; 
-        }).join('') || "Keine aktiven Tische"; 
-        openModal('modal-tables'); 
+    // ========== UPDATED TABLES FUNCTIONS WITH REAL-TIME LISTENER ==========
+    function updateTablesGrid() {
+        const grid = document.getElementById('tables-grid');
+        if (!grid) return;
+        
+        const openOrders = orders.filter(o => o.status === 'open');
+        grid.innerHTML = openOrders.map(o => {
+            let lastTime = '';
+            if (o.batches && o.batches.length > 0) {
+                const lastBatch = o.batches[o.batches.length - 1];
+                lastTime = lastBatch.time || '';
+            }
+            return `<div class="table-box">
+                <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
+                <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
+                <div style="margin-top: 10px;">
+                    <button onclick="event.stopPropagation(); showOrderAndCloseTables('${o.table}')">Show</button>
+                    <button onclick="event.stopPropagation(); payTableAndCloseTables(${o.id})" style="background:var(--green);">Pay</button>
+                    <button onclick="event.stopPropagation(); confirmDeleteTableFromCardAndCloseTables('${o.table}')" style="background:var(--red);">Löschen</button>
+                </div>
+            </div>`;
+        }).join('') || "Keine aktiven Tische";
     }
 
-    // Neue Funktionen für Tables Modal
+    function startTablesListener() {
+        if (window.tablesListenerRef) {
+            db.ref('active_orders').off('value', window.tablesListenerRef);
+        }
+        
+        window.tablesListenerRef = (snapshot) => {
+            const tablesModal = document.getElementById('modal-tables');
+            if (tablesModal && tablesModal.style.display === 'block') {
+                // Reload orders from Firebase and update
+                db.ref('data').once('value', (dataSnapshot) => {
+                    const data = dataSnapshot.val();
+                    if (data && data.orders) {
+                        orders = data.orders;
+                        save();
+                        updateTablesGrid();
+                    }
+                });
+            }
+        };
+        
+        db.ref('active_orders').on('value', window.tablesListenerRef);
+    }
+
+    function openTables() { 
+        updateTablesGrid();
+        openModal('modal-tables'); 
+        startTablesListener();
+    }
+
     function showOrderAndCloseTables(tableId) {
         closeModal('modal-tables');
         showOrder(tableId);
@@ -1083,7 +1131,7 @@
         document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb"; 
     }
 
-    // ========== FIXED ARROW FUNCTIONS ==========
+    // ========== ARROW FUNCTIONS ==========
     function moveUp(type, id) { 
         if (type === 'category') {
             const index = categories.findIndex(item => item.id === id);
