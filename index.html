@@ -67,13 +67,13 @@
         }
         .grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-            gap: 2vh 2vw; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 12px; 
             margin-bottom: 2vh; 
         }
         .card { 
             background: white; 
-            padding: 2vh 1vw; 
+            padding: 16px 8px; 
             text-align: center; 
             border-radius: 12px; 
             cursor: pointer; 
@@ -84,13 +84,13 @@
             flex-direction: column; 
             justify-content: space-between;
             gap: 8px;
-            font-size: clamp(0.85rem, 2.5vh, 1.1rem);
+            font-size: 0.9rem;
         }
         .card:active { transform: scale(0.98); }
         .cat-card { background: var(--blue); color: white; border: none; }
         .prod-card { border-bottom: 5px solid var(--green); cursor: pointer; }
         .prod-price {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: var(--green);
             font-weight: bold;
             margin: 5px 0;
@@ -100,7 +100,7 @@
             color: white;
             border: none;
             border-radius: 20px;
-            padding: 8px 12px;
+            padding: 10px;
             font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
@@ -115,7 +115,7 @@
             background: white; 
             display: flex; 
             flex-direction: column; 
-            padding: 2vh 2vw; 
+            padding: 12px; 
             border-left: 2px solid #ccc; 
             height: 100%; 
             overflow: hidden; 
@@ -128,11 +128,11 @@
         }
         .cart-item { 
             border: 1px solid #ddd; 
-            padding: 1vh 2vw; 
-            margin-bottom: 0.8vh; 
+            padding: 12px; 
+            margin-bottom: 12px; 
             border-radius: 10px;
             transition: all 0.2s; 
-            font-size: clamp(0.8rem, 2vh, 0.95rem);
+            font-size: 0.95rem;
         }
         .cart-item.locked { background: #f8f9fa; color: #95a5a6; border-left: 5px solid var(--gray); }
         .cart-item.new { background: #fff; border-left: 5px solid var(--blue); }
@@ -146,14 +146,15 @@
         }
         .cart-item-name {
             font-weight: bold;
-            font-size: 0.95rem;
-            flex: 2;
-            min-width: 100px;
+            font-size: 1rem;
+            flex: 1 1 100%;
+            margin-bottom: 5px;
         }
         .cart-item-prices {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             font-size: 0.85rem;
+            margin-left: auto;
         }
         .cart-item-unit-price { color: var(--blue); }
         .cart-item-total-price { color: var(--green); font-weight: bold; }
@@ -161,25 +162,26 @@
             color: var(--orange);
             font-weight: bold;
             background: #fef5e8;
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 20px;
+            font-size: 0.9rem;
         }
         .action-btns { 
             display: flex; 
-            gap: 6px; 
-            margin-top: 8px; 
+            gap: 8px; 
+            margin-top: 12px; 
             flex-wrap: wrap; 
             justify-content: flex-start;
         }
         .btn-sm { 
             border: none; 
-            padding: 5px 12px; 
+            padding: 8px 14px; 
             border-radius: 20px; 
             color: white; 
-            font-size: 0.75rem; 
+            font-size: 0.8rem; 
             cursor: pointer; 
             font-weight: bold; 
-            min-width: 45px;
+            min-width: 55px;
         }
         .btn-sm-qty { background: var(--green); }
         .btn-sm-qty-minus { background: var(--orange); }
@@ -193,10 +195,10 @@
         .cart-total-bar {
             background: var(--dark);
             color: white;
-            padding: 1.5vh 2vw;
+            padding: 12px;
             border-radius: 10px;
             text-align: center;
-            font-size: clamp(1.2rem, 3vh, 1.6rem);
+            font-size: 1.4rem;
             font-weight: bold;
             margin-top: 1vh;
         }
@@ -551,10 +553,10 @@
         }
         .btn-main { 
             width: 100%; 
-            padding: 2vh 2vw; 
+            padding: 14px; 
             border: none; 
             border-radius: 10px; 
-            font-size: clamp(1rem, 3vh, 1.4rem); 
+            font-size: 1.1rem; 
             font-weight: bold; 
             cursor: pointer; 
             margin-top: 1vh; 
@@ -621,7 +623,7 @@
             border: none;
             border-radius: 50px;
             padding: 12px 20px;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             display: inline-flex;
@@ -629,6 +631,8 @@
             gap: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: all 0.2s;
+            width: 100%;
+            justify-content: center;
         }
         .main-mic-btn:active {
             transform: scale(0.97);
@@ -654,11 +658,11 @@
         .voice-content {
             background: white;
             border-radius: 28px;
-            width: 90%;
+            width: 95%;
             max-width: 450px;
             max-height: 85vh;
             overflow-y: auto;
-            padding: 24px;
+            padding: 20px;
         }
         .voice-search-box {
             display: flex;
@@ -668,15 +672,15 @@
         }
         .voice-search-box input {
             flex: 1;
-            padding: 14px;
+            padding: 12px;
             border: 2px solid var(--blue);
             border-radius: 16px;
             font-size: 1rem;
             min-width: 180px;
         }
         .voice-mic-small {
-            width: 52px;
-            height: 52px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             background: #e74c3c;
             color: white;
@@ -698,7 +702,7 @@
             font-size: 1.1rem;
         }
         .voice-result .product-name {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: bold;
             margin: 10px 0;
         }
@@ -726,14 +730,14 @@
         }
         .voice-note-input input {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #ddd;
             border-radius: 12px;
             min-width: 150px;
         }
         .voice-note-mic {
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: #e74c3c;
             color: white;
@@ -749,7 +753,7 @@
         }
         .voice-actions button {
             flex: 1;
-            padding: 14px;
+            padding: 12px;
             border: none;
             border-radius: 16px;
             font-weight: bold;
@@ -928,8 +932,8 @@
             <button class="stats-tab-btn active" onclick="switchStatsTab('orders')">Bestellungen</button>
             <button class="stats-tab-btn" onclick="switchStatsTab('products')">Produkte</button>
         </div>
-        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></tr></div></div>
-        <div id="stats-products-section" style="display:none;"><div class="stats-table"><tr><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></table></div></div>
+        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></table></div></div>
+        <div id="stats-products-section" style="display:none;"><div class="stats-table"><table><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></td></div></div>
     </div>
 </div>
 
@@ -1431,7 +1435,7 @@
         };
     }
 
-    // ========== REST OF THE ORIGINAL FUNCTIONS (unchanged except where noted) ==========
+    // ========== REST OF THE ORIGINAL FUNCTIONS (unchanged) ==========
     function ensureOrders() {
         categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
         products = products.map((item, index) => { if (item.order === undefined) item.order = index; if (item.recipeIngredients === undefined) item.recipeIngredients = ''; if (item.recipeInstructions === undefined) item.recipeInstructions = ''; return item; });
