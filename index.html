@@ -610,38 +610,35 @@
         .stats-table th { background: var(--dark); color: white; padding: 1vh; position: sticky; top: 0; }
         .stats-table td { padding: 1vh; border-bottom: 1px solid #ddd; }
 
-        /* Floating Mic Button */
-        .fab-mic {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
+        /* New Mic Button Position - Inside Cart Above Send Button */
+        .mic-button-container {
+            margin: 10px 0 5px 0;
+            text-align: center;
+        }
+        .main-mic-btn {
             background: #e74c3c;
             color: white;
             border: none;
-            font-size: 30px;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
-            transition: all 0.2s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s;
         }
-        .fab-mic:hover { transform: scale(1.05); }
-        .fab-mic.recording {
+        .main-mic-btn:active {
+            transform: scale(0.97);
+        }
+        .main-mic-btn.recording {
             background: #ff0000;
             animation: pulse 1s infinite;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
-            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(231,76,60,0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); }
-        }
 
-        /* Voice Search Modal */
+        /* Voice Modal - Improved Layout for Mobile */
         .voice-modal {
             position: fixed;
             top: 0;
@@ -667,6 +664,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         .voice-search-box input {
             flex: 1;
@@ -674,6 +672,7 @@
             border: 2px solid var(--blue);
             border-radius: 16px;
             font-size: 1rem;
+            min-width: 180px;
         }
         .voice-mic-small {
             width: 52px;
@@ -684,6 +683,7 @@
             border: none;
             font-size: 22px;
             cursor: pointer;
+            flex-shrink: 0;
         }
         .voice-result {
             background: #f0f8ff;
@@ -722,12 +722,14 @@
         .voice-note-input {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
         .voice-note-input input {
             flex: 1;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 12px;
+            min-width: 150px;
         }
         .voice-note-mic {
             width: 44px;
@@ -738,6 +740,7 @@
             border: none;
             font-size: 18px;
             cursor: pointer;
+            flex-shrink: 0;
         }
         .voice-actions {
             display: flex;
@@ -791,14 +794,15 @@
         </div>
         <div id="cart-list" class="cart-items"></div>
         <div id="cart-total-bar" class="cart-total-bar">0.00 €</div>
+        <!-- New Mic Button Position: Centered above send button -->
+        <div class="mic-button-container">
+            <button id="main-mic-btn" class="main-mic-btn">🎤 Sprachbestellung</button>
+        </div>
         <div style="border-top: 4px solid var(--dark); padding-top: 1vh;">
             <button class="btn-main" style="background:var(--green)" onclick="initiateSend()">BESTELLUNG SENDEN</button>
         </div>
     </section>
 </main>
-
-<!-- Floating Mic Button -->
-<button id="fab-mic" class="fab-mic" title="Sprachbestellung">🎤</button>
 
 <!-- Recipe View Modal -->
 <div id="modal-recipe-view" class="modal">
@@ -924,8 +928,8 @@
             <button class="stats-tab-btn active" onclick="switchStatsTab('orders')">Bestellungen</button>
             <button class="stats-tab-btn" onclick="switchStatsTab('products')">Produkte</button>
         </div>
-        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></table></div></div>
-        <div id="stats-products-section" style="display:none;"><div class="stats-table"></table><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></table></div></div>
+        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></tr></div></div>
+        <div id="stats-products-section" style="display:none;"><div class="stats-table"><tr><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></table></div></div>
     </div>
 </div>
 
@@ -1064,73 +1068,93 @@
     let mainRecognition = null;
     let isMainRecording = false;
 
-    // ========== IMPROVED LETTER MATCHING ALGORITHM ==========
+    // ========== IMPROVED LETTER MATCHING ALGORITHM (WITH SPACE REMOVAL) ==========
     function calculateLetterMatchScore(productName, spokenText) {
+        // Normalize: remove spaces, convert to lowercase
+        const pNameNorm = productName.toLowerCase().replace(/\s/g, '');
+        const sTextNorm = spokenText.toLowerCase().replace(/\s/g, '');
+        
+        // 1. Exact match after removing spaces (highest priority)
+        if (pNameNorm === sTextNorm) return 100;
+        
+        // 2. One contains the other
+        if (pNameNorm.includes(sTextNorm)) return 95;
+        if (sTextNorm.includes(pNameNorm)) return 90;
+        
         const pName = productName.toLowerCase();
         const sText = spokenText.toLowerCase();
         
-        // 1. Exact match (100% only for perfect match)
-        if (pName === sText) return 100;
+        // 3. Word-by-word matching with original spacing
+        const pWords = pName.split(' ');
+        const sWords = sText.split(' ');
+        let wordBonus = 0;
         
-        // 2. Product name contains spoken text completely
-        if (pName.includes(sText)) return 95;
+        // Check first word match (important for "Amarena" vs "Amaretto")
+        if (pWords[0] === sWords[0]) {
+            wordBonus += 40;
+        } else if (pWords[0] && sWords[0] && pWords[0][0] === sWords[0][0]) {
+            wordBonus += 15;
+        }
         
-        // 3. Spoken text contains product name completely
-        if (sText.includes(pName)) return 90;
+        // Check if any full word matches
+        for (let pw of pWords) {
+            if (pw.length > 2 && sText.includes(pw)) {
+                wordBonus += 20;
+            }
+        }
+        for (let sw of sWords) {
+            if (sw.length > 2 && pName.includes(sw)) {
+                wordBonus += 15;
+            }
+        }
         
+        // 4. Letter matching (without spaces for better accuracy)
         let matchedLetters = 0;
         let usedIndices = [];
-        
-        // Count matching letters in order
-        for (let char of sText) {
-            for (let i = 0; i < pName.length; i++) {
-                if (!usedIndices.includes(i) && pName[i] === char) {
+        for (let char of sTextNorm) {
+            for (let i = 0; i < pNameNorm.length; i++) {
+                if (!usedIndices.includes(i) && pNameNorm[i] === char) {
                     matchedLetters++;
                     usedIndices.push(i);
                     break;
                 }
             }
         }
+        const maxPossible = Math.max(pNameNorm.length, sTextNorm.length);
+        let letterRatio = (matchedLetters / maxPossible) * 60; // max 60%
         
-        // Letter ratio (max 70%)
-        let letterRatio = (matchedLetters / Math.max(pName.length, sText.length)) * 70;
-        
-        // Bonus for whole word matches (max 20%)
-        let wordBonus = 0;
-        const pWords = pName.split(' ');
-        for (let word of pWords) {
-            if (word.length > 2 && sText.includes(word)) {
-                wordBonus += 15;
-            }
-        }
-        
-        // First letter bonus (max 5%)
+        // 5. First letter bonus
         let firstLetterBonus = 0;
-        if (pName.charAt(0) === sText.charAt(0)) {
+        if (pNameNorm.charAt(0) === sTextNorm.charAt(0)) {
             firstLetterBonus = 5;
         }
         
-        // Final score (max 89 to keep exact matches higher)
-        let finalScore = Math.min(89, Math.round(letterRatio + wordBonus + firstLetterBonus));
-        
+        let finalScore = Math.min(99, Math.round(letterRatio + wordBonus + firstLetterBonus));
         return finalScore;
     }
 
     function findBestMatchingProduct(spokenText) {
         let matches = [];
+        const searchText = spokenText.toLowerCase().replace(/\s/g, '');
+        
+        // First, try exact match after removing spaces
+        const exactMatch = products.find(p => p.name.toLowerCase().replace(/\s/g, '') === searchText);
+        if (exactMatch) {
+            console.log("Exact match found (no spaces):", exactMatch.name);
+            return { product: exactMatch, score: 100 };
+        }
         
         for (let p of products) {
             let score = calculateLetterMatchScore(p.name, spokenText);
             matches.push({ product: p, score: score, nameLength: p.name.length });
         }
         
-        // Sort by: score desc, then name length desc (longer names are more specific)
+        // Sort by score desc, then by name length desc (longer names are more specific)
         matches.sort((a, b) => {
             if (a.score !== b.score) return b.score - a.score;
             return b.nameLength - a.nameLength;
         });
         
-        // Debug output (visible in console)
         console.log("=== Voice Search ===");
         console.log("Spoken:", spokenText);
         console.log("Top 3 matches:");
@@ -1407,6 +1431,7 @@
         };
     }
 
+    // ========== REST OF THE ORIGINAL FUNCTIONS (unchanged except where noted) ==========
     function ensureOrders() {
         categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
         products = products.map((item, index) => { if (item.order === undefined) item.order = index; if (item.recipeIngredients === undefined) item.recipeIngredients = ''; if (item.recipeInstructions === undefined) item.recipeInstructions = ''; return item; });
@@ -1815,10 +1840,10 @@
     function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
 
-    // Initialize FAB Mic (opens voice modal)
-    const fabMic = document.getElementById('fab-mic');
-    if (fabMic) {
-        fabMic.onclick = () => {
+    // Initialize Main Mic Button (the new one in cart)
+    const mainMicBtn = document.getElementById('main-mic-btn');
+    if (mainMicBtn) {
+        mainMicBtn.onclick = () => {
             showVoiceModal();
         };
     }
