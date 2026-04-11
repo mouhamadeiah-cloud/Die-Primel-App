@@ -648,7 +648,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             z-index: 2000;
             display: flex;
             align-items: center;
@@ -656,12 +656,12 @@
         }
         .voice-content {
             background: white;
-            border-radius: 24px;
+            border-radius: 28px;
             width: 90%;
             max-width: 450px;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 24px;
         }
         .voice-search-box {
             display: flex;
@@ -670,34 +670,35 @@
         }
         .voice-search-box input {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border: 2px solid var(--blue);
-            border-radius: 12px;
+            border-radius: 16px;
             font-size: 1rem;
         }
         .voice-mic-small {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: #e74c3c;
             color: white;
             border: none;
-            font-size: 20px;
+            font-size: 22px;
             cursor: pointer;
         }
         .voice-result {
             background: #f0f8ff;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 20px;
+            padding: 20px;
             margin-bottom: 20px;
             text-align: center;
         }
         .voice-result h3 {
             color: var(--green);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
         }
         .voice-result .product-name {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: bold;
             margin: 10px 0;
         }
@@ -708,6 +709,7 @@
         .voice-result .similarity {
             color: var(--gray);
             font-size: 0.8rem;
+            margin-top: 8px;
         }
         .voice-note-box {
             margin-bottom: 20px;
@@ -723,18 +725,18 @@
         }
         .voice-note-input input {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 12px;
         }
         .voice-note-mic {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: #e74c3c;
             color: white;
             border: none;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
         }
         .voice-actions {
@@ -744,10 +746,11 @@
         }
         .voice-actions button {
             flex: 1;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 12px;
+            border-radius: 16px;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
         }
         .btn-add { background: var(--green); color: white; }
@@ -1059,63 +1062,84 @@
     
     // Voice Recognition
     let mainRecognition = null;
-    let noteRecognitionInModal = null;
     let isMainRecording = false;
 
-    // ========== LETTER MATCHING ALGORITHM ==========
+    // ========== IMPROVED LETTER MATCHING ALGORITHM ==========
     function calculateLetterMatchScore(productName, spokenText) {
         const pName = productName.toLowerCase();
         const sText = spokenText.toLowerCase();
         
+        // 1. Exact match (100% only for perfect match)
         if (pName === sText) return 100;
         
-        let score = 0;
+        // 2. Product name contains spoken text completely
+        if (pName.includes(sText)) return 95;
+        
+        // 3. Spoken text contains product name completely
+        if (sText.includes(pName)) return 90;
+        
+        let matchedLetters = 0;
         let usedIndices = [];
         
         // Count matching letters in order
         for (let char of sText) {
             for (let i = 0; i < pName.length; i++) {
                 if (!usedIndices.includes(i) && pName[i] === char) {
-                    score += 10;
+                    matchedLetters++;
                     usedIndices.push(i);
                     break;
                 }
             }
         }
         
-        // Bonus for word matches
+        // Letter ratio (max 70%)
+        let letterRatio = (matchedLetters / Math.max(pName.length, sText.length)) * 70;
+        
+        // Bonus for whole word matches (max 20%)
+        let wordBonus = 0;
         const pWords = pName.split(' ');
         for (let word of pWords) {
             if (word.length > 2 && sText.includes(word)) {
-                score += 30;
+                wordBonus += 15;
             }
         }
         
-        // Bonus for starting letters
-        if (pName.charAt(0) === sText.charAt(0) && pName.length > 3) {
-            score += 15;
+        // First letter bonus (max 5%)
+        let firstLetterBonus = 0;
+        if (pName.charAt(0) === sText.charAt(0)) {
+            firstLetterBonus = 5;
         }
         
-        // Calculate percentage
-        const maxScore = Math.max(pName.length, sText.length) * 10;
-        return Math.min(100, Math.round((score / maxScore) * 100));
+        // Final score (max 89 to keep exact matches higher)
+        let finalScore = Math.min(89, Math.round(letterRatio + wordBonus + firstLetterBonus));
+        
+        return finalScore;
     }
 
     function findBestMatchingProduct(spokenText) {
-        let bestMatch = null;
-        let bestScore = 0;
+        let matches = [];
         
         for (let p of products) {
             let score = calculateLetterMatchScore(p.name, spokenText);
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = p;
-            }
+            matches.push({ product: p, score: score, nameLength: p.name.length });
         }
         
-        // Minimum threshold (50% similarity)
-        if (bestScore >= 40) {
-            return { product: bestMatch, score: bestScore };
+        // Sort by: score desc, then name length desc (longer names are more specific)
+        matches.sort((a, b) => {
+            if (a.score !== b.score) return b.score - a.score;
+            return b.nameLength - a.nameLength;
+        });
+        
+        // Debug output (visible in console)
+        console.log("=== Voice Search ===");
+        console.log("Spoken:", spokenText);
+        console.log("Top 3 matches:");
+        matches.slice(0, 3).forEach(m => {
+            console.log(`  ${m.product.name}: ${m.score}%`);
+        });
+        
+        if (matches.length > 0 && matches[0].score >= 40) {
+            return { product: matches[0].product, score: matches[0].score };
         }
         return null;
     }
@@ -1134,7 +1158,10 @@
                         <button id="voice-search-mic" class="voice-mic-small">🎤</button>
                     </div>
                     <div id="voice-result-container">
-                        <!-- Result will appear here -->
+                        <div class="voice-result">
+                            <h3>🎤 Sprechen Sie jetzt...</h3>
+                            <div class="similarity">Drücken Sie auf das Mikrofon und sagen Sie den Namen</div>
+                        </div>
                     </div>
                     <div class="voice-note-box">
                         <label>📝 Notiz (optional):</label>
@@ -1304,9 +1331,8 @@
                 });
                 renderCart();
                 showToast(`✅ ${currentBestProduct.name} wurde hinzugefügt`);
-                // Clear the modal and close
+                // Close modal
                 document.querySelector('.voice-modal').remove();
-                // Reset input for next use (not needed as modal is removed)
             }
         }
         
