@@ -764,6 +764,112 @@
         .btn-close { background: var(--red); color: white; }
 
         @media (orientation: landscape) { header { height: 15vh; } }
+/* ========== تحسينات خاصة للهواتف المحمولة ========== */
+@media (max-width: 768px) {
+    /* جعل الخلايا أكبر وأسهل للنقر */
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    .card {
+        padding: 20px 8px;
+        font-size: 1rem;
+    }
+    .prod-price {
+        font-size: 1.3rem;
+    }
+    .recipe-btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    /* تحسين السلة (Warenkorb) */
+    #cart-container {
+        padding: 15px;
+    }
+    .cart-item {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .cart-item-name {
+        font-size: 1.1rem;
+    }
+    .cart-item-prices {
+        font-size: 1rem;
+        gap: 10px;
+    }
+    .cart-item-quantity {
+        font-size: 1rem;
+        padding: 4px 10px;
+    }
+
+    /* أزرار التحكم في السلة */
+    .action-btns {
+        gap: 12px;
+        margin-top: 15px;
+    }
+    .btn-sm {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+        min-width: 65px;
+    }
+
+    /* شريط الإجمالي وزر الإرسال */
+    .cart-total-bar {
+        font-size: 1.6rem;
+        padding: 15px;
+    }
+    .btn-main {
+        padding: 16px;
+        font-size: 1.2rem;
+    }
+
+    /* زر المايك الرئيسي داخل السلة */
+    .main-mic-btn {
+        padding: 14px 20px;
+        font-size: 1.1rem;
+        width: 100%;
+    }
+
+    /* تحسين النوافذ المنبثقة للصوت */
+    .voice-content {
+        width: 95%;
+        padding: 20px;
+    }
+    .voice-search-box input {
+        font-size: 1rem;
+        padding: 14px;
+    }
+    .voice-mic-small {
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+    }
+    .voice-result .product-name {
+        font-size: 1.4rem;
+    }
+    .voice-note-input input {
+        padding: 12px;
+    }
+    .voice-note-mic {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    .voice-actions button {
+        padding: 14px;
+        font-size: 1rem;
+    }
+
+    /* رؤوس الأزرار العلوية */
+    header button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+    header h2 {
+        font-size: 1.3rem;
+    }
+}
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
