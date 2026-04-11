@@ -1,622 +1,332 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<!-- Manifest für PWA -->
-<link rel="manifest" href="/manifest.json">
-
-<!-- iOS-spezifische Meta-Tags -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Primel POS">
-
-<!-- iOS Icons -->
-<link rel="apple-touch-icon" href="icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png">
-<link rel="apple-touch-icon" sizes="167x167" href="icons/icon-152.png">
-
-<!-- Windows Tiles -->
-<meta name="msapplication-TileColor" content="#2c3e50">
-<meta name="msapplication-TileImage" content="icons/icon-144.png">
-
-<!-- Theme Color für Browser -->
-<meta name="theme-color" content="#2c3e50">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
-    <title>Die Primel POS - V3 Professional</title>
+    <title>Die Primel POS - Mobile</title>
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
         :root {
-            --green: #27ae60; --blue: #2980b9; --orange: #f39c12;
-            --red: #c0392b; --dark: #2c3e50; --gray: #95a5a6; --light: #ecf0f1;
+            --green: #27ae60;
+            --blue: #2980b9;
+            --orange: #f39c12;
+            --red: #c0392b;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --light: #ecf0f1;
         }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        body { margin: 0; background: var(--light); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-        html { height: 100%; }
 
-        header { 
-            height: 10vh; min-height: 60px; max-height: 80px; background: var(--dark); color: white; 
-            display: flex; justify-content: space-between; align-items: center; padding: 0 4vw;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            flex-shrink: 0;
+        body {
+            background: var(--light);
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        header h2 { font-size: clamp(1.2rem, 4vw, 2rem); margin: 0; }
-        header button { 
-            font-size: clamp(0.8rem, 2.5vw, 1rem); 
-            padding: 0.5rem 1rem; 
-            border: none; 
-            border-radius: 5px; 
-            font-weight: bold;
-            cursor: pointer;
+
+        /* Header */
+        header {
+            background: var(--dark);
             color: white;
-            margin-left: 0.5rem;
-        }
-        header button:first-child { background: var(--green); }
-        header button:nth-child(2) { background: var(--orange); }
-        header button:nth-child(3) { background: var(--red); }
-        header button:last-child { background: #ff5722; }
-
-        main { display: flex; flex: 1; min-height: 0; width: 100%; overflow: hidden; }
-        
-        #menu-container { 
-            flex: 2; 
-            padding: 2vh 2vw; 
-            overflow-y: auto; 
-            background: #dfe4ea; 
-            height: 100%; 
-            -webkit-overflow-scrolling: touch; 
-        }
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 2vh; 
-        }
-        .card { 
-            background: white; 
-            padding: 16px 8px; 
-            text-align: center; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-            font-weight: bold;
-            transition: transform 0.1s; 
-            display: flex; 
-            flex-direction: column; 
+            display: flex;
             justify-content: space-between;
-            gap: 8px;
+            align-items: center;
+            padding: 0 4vw;
+            height: 60px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        header h2 {
+            font-size: 1.4rem;
+            margin: 0;
+        }
+
+        /* Hamburger button */
+        .hamburger {
+            font-size: 28px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: none;
+            width: 45px;
+            height: 45px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Desktop menu */
+        .nav-menu {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-menu button {
+            background: var(--green);
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
             font-size: 0.9rem;
         }
-        .card:active { transform: scale(0.98); }
-        .cat-card { background: var(--blue); color: white; border: none; }
-        .prod-card { border-bottom: 5px solid var(--green); cursor: pointer; }
+
+        .nav-menu button:nth-child(2) {
+            background: var(--orange);
+        }
+
+        .nav-menu button:nth-child(3) {
+            background: var(--red);
+        }
+
+        /* RUF button stays visible */
+        .ruf-btn {
+            background: #ff5722;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 8px;
+        }
+
+        /* Mobile menu */
+        @media (max-width: 700px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .nav-menu {
+                position: fixed;
+                top: 60px;
+                right: -250px;
+                width: 220px;
+                height: calc(100% - 60px);
+                background: var(--dark);
+                flex-direction: column;
+                align-items: stretch;
+                padding: 20px;
+                gap: 15px;
+                transition: right 0.3s ease;
+                z-index: 1001;
+                box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+            }
+
+            .nav-menu.open {
+                right: 0;
+            }
+
+            .nav-menu button {
+                width: 100%;
+                padding: 12px;
+                font-size: 1rem;
+            }
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #menu-container {
+            flex: 2;
+            padding: 12px;
+            overflow-y: auto;
+            background: #dfe4ea;
+        }
+
+        #cart-container {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            border-left: 2px solid #ccc;
+            overflow: hidden;
+        }
+
+        /* Grids */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 16px 8px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: 0.1s;
+        }
+
+        .card:active {
+            transform: scale(0.97);
+        }
+
+        .cat-card {
+            background: var(--blue);
+            color: white;
+        }
+
+        .prod-card {
+            border-bottom: 4px solid var(--green);
+        }
+
         .prod-price {
             font-size: 1.2rem;
             color: var(--green);
             font-weight: bold;
-            margin: 5px 0;
         }
+
         .recipe-btn {
             background: var(--orange);
             color: white;
             border: none;
-            border-radius: 20px;
-            padding: 10px;
+            border-radius: 30px;
+            padding: 8px;
             font-size: 0.8rem;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 5px;
-            transition: background 0.2s;
-            width: 100%;
         }
-        .recipe-btn:active { background: #e67e22; transform: scale(0.97); }
 
-        #cart-container { 
-            flex: 1; 
-            background: white; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 12px; 
-            border-left: 2px solid #ccc; 
-            height: 100%; 
-            overflow: hidden; 
+        /* Cart */
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
         }
-        .cart-items { 
-            flex: 1; 
-            overflow-y: auto; 
-            margin-bottom: 1vh; 
-            -webkit-overflow-scrolling: touch; 
+
+        .cart-item {
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: #fff;
+            border-left: 5px solid var(--blue);
         }
-        .cart-item { 
-            border: 1px solid #ddd; 
-            padding: 12px; 
-            margin-bottom: 12px; 
-            border-radius: 10px;
-            transition: all 0.2s; 
-            font-size: 0.95rem;
+
+        .cart-item.locked {
+            background: #f8f9fa;
+            border-left-color: var(--gray);
         }
-        .cart-item.locked { background: #f8f9fa; color: #95a5a6; border-left: 5px solid var(--gray); }
-        .cart-item.new { background: #fff; border-left: 5px solid var(--blue); }
-        
+
         .cart-item-main {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
+            margin-bottom: 6px;
         }
+
         .cart-item-name {
             font-weight: bold;
             font-size: 1rem;
-            flex: 1 1 100%;
-            margin-bottom: 5px;
+            flex: 2;
         }
+
         .cart-item-prices {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             font-size: 0.85rem;
-            margin-left: auto;
         }
-        .cart-item-unit-price { color: var(--blue); }
-        .cart-item-total-price { color: var(--green); font-weight: bold; }
-        .cart-item-quantity {
-            color: var(--orange);
+
+        .cart-item-unit-price {
+            color: var(--blue);
+        }
+
+        .cart-item-total-price {
+            color: var(--green);
             font-weight: bold;
+        }
+
+        .cart-item-quantity {
             background: #fef5e8;
-            padding: 4px 10px;
+            padding: 2px 10px;
             border-radius: 20px;
-            font-size: 0.9rem;
         }
-        .action-btns { 
-            display: flex; 
-            gap: 8px; 
-            margin-top: 12px; 
-            flex-wrap: wrap; 
-            justify-content: flex-start;
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
         }
-        .btn-sm { 
-            border: none; 
-            padding: 8px 14px; 
-            border-radius: 20px; 
-            color: white; 
-            font-size: 0.8rem; 
-            cursor: pointer; 
-            font-weight: bold; 
-            min-width: 55px;
+
+        .btn-sm {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.75rem;
         }
-        .btn-sm-qty { background: var(--green); }
-        .btn-sm-qty-minus { background: var(--orange); }
-        .btn-sm-extra { background: var(--orange); }
-        .btn-sm-note { background: var(--blue); }
-        .btn-sm-del { background: var(--red); }
-        
-        .cart-item-extras { font-size: 0.7rem; color: var(--blue); margin-top: 4px; padding-left: 5px; }
-        .cart-item-note { color: var(--red); font-size: 0.7rem; margin-top: 4px; padding-left: 5px; }
+
+        .btn-sm-qty {
+            background: var(--green);
+        }
+
+        .btn-sm-qty-minus {
+            background: var(--orange);
+        }
+
+        .btn-sm-extra {
+            background: var(--orange);
+        }
+
+        .btn-sm-note {
+            background: var(--blue);
+        }
+
+        .btn-sm-del {
+            background: var(--red);
+        }
+
+        .cart-item-extras, .cart-item-note {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            padding-left: 5px;
+        }
 
         .cart-total-bar {
             background: var(--dark);
             color: white;
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 12px;
             text-align: center;
             font-size: 1.4rem;
             font-weight: bold;
-            margin-top: 1vh;
+            margin-top: 8px;
         }
 
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.7); 
-            z-index: 1000; 
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
-            backdrop-filter: blur(3px);
-        }
-        .modal-content { 
-            background: white; 
-            width: 90%; 
-            max-width: 500px; 
-            margin: 10vh auto; 
-            padding: 2rem; 
-            border-radius: 20px; 
-            max-height: 80vh; 
-            overflow-y: auto; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            position: relative;
-        }
-        .close { 
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 32px; 
-            font-weight: bold;
-            cursor: pointer; 
-            color: var(--red); 
-            background: none;
-            border: none;
-            transition: color 0.2s;
-        }
-        .close:hover { color: #ff6b6b; }
-
-        .table-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-            gap: 12px;
-            margin: 20px 0;
-        }
-        .table-btn {
-            padding: 15px 0;
-            background: var(--blue);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .table-btn.selected { background: var(--green); transform: scale(1.05); box-shadow: 0 0 0 3px rgba(39,174,96,0.3); }
-        .selected-display {
-            text-align: center;
-            font-size: 1.3rem;
-            padding: 12px;
-            background: var(--light);
-            border-radius: 12px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .modal-footer {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-        .modal-footer button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            color: white;
-        }
-        .btn-confirm { background: var(--green); }
-        .btn-cancel { background: var(--red); }
-
-        #extras-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 15px;
-        }
-        #extras-grid .card {
-            cursor: pointer;
-            background: var(--blue);
-            color: white;
-            padding: 12px;
-            text-align: center;
-            border-radius: 12px;
-        }
-
-        #modal-confirm .modal-content { text-align: center; max-width: 350px; }
-        .confirm-actions { display: flex; gap: 12px; margin-top: 20px; justify-content: center; }
-        .confirm-actions button { padding: 12px 24px; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; }
-        
-        .extra-type-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .extra-type-btn {
-            padding: 20px;
-            font-size: 1.2rem;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-        }
-        .extra-type-btn.extras { background: var(--orange); }
-        .extra-type-btn.zutaten { background: var(--blue); }
-
-        #modal-recipe-view .modal-content {
-            max-width: 700px;
-            background: #fef9e6;
-        }
-        .recipe-title {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--dark);
-            border-bottom: 3px solid var(--orange);
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-        .recipe-section { margin-bottom: 1.5rem; }
-        .recipe-section h3 {
-            font-size: 1.3rem;
-            color: var(--blue);
-            border-left: 5px solid var(--orange);
-            padding-left: 1rem;
-            margin-bottom: 1rem;
-        }
-        .recipe-ingredients, .recipe-instructions {
-            background: white;
-            padding: 1rem;
-            border-radius: 12px;
-            font-size: 1rem;
-            line-height: 1.5;
-            white-space: pre-wrap;
-        }
-        .recipe-empty { color: var(--gray); font-style: italic; text-align: center; padding: 1rem; }
-
-        #modal-kitchen .modal-content {
-            background: #000 !important;
-            width: 100% !important;
-            height: 100dvh !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            border-radius: 0 !important;
-            padding: 2vh 4vw !important;
-            color: white;
-        }
-        .kitchen-order-card {
-            background: white;
-            color: #333;
-            border-radius: 12px;
-            padding: 2vh 2vw;
-            display: flex;
-            flex-direction: column;
-            border: 5px solid transparent;
-            box-shadow: 0 4px 10px rgba(255,255,255,0.1);
-            min-height: 200px;
-        }
-        .late-blink { animation: kitchen-blink 1s infinite; }
-        @keyframes kitchen-blink {
-            0% { border-color: transparent; }
-            50% { border-color: #ff3b30; }
-            100% { border-color: transparent; }
-        }
-        .card-header-pos {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 1vh;
-            margin-bottom: 1vh;
-        }
-        .expanded-order {
-            min-height: fit-content !important;
-            z-index: 100;
-            box-shadow: 0 10px 30px rgba(255,255,255,0.3);
-            transform: scale(1.02);
-            transition: all 0.3s ease;
-        }
-
-        #modal-admin .modal-content {
-            width: 100% !important;
-            height: 100dvh !important;
-            max-width: 100% !important;
-            border-radius: 0 !important;
-            background: #f5f7fa;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-        }
-        .admin-header {
-            padding: 2vh 4vw;
-            border-bottom: 2px solid #ddd;
-            background: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .admin-header h1 { font-size: clamp(1.5rem, 4vh, 2.5rem); margin: 0; }
-        .admin-tabs {
-            display: flex;
-            gap: 2vw;
-            flex-wrap: wrap;
-            padding: 1vh 2vw;
-            background: white;
-            border-bottom: 1px solid #ddd;
-        }
-        .admin-tab-btn {
-            padding: 1.5vh 2vw;
-            border: none;
-            border-radius: 8px;
-            background: var(--light);
-            font-size: clamp(0.9rem, 2vh, 1.2rem);
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .admin-tab-btn.active { background: var(--blue); color: white; }
-        .admin-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 3vh 4vw;
-            background: #f5f7fa;
-        }
-        .admin-section { display: none; max-width: 1200px; margin: 0 auto; }
-        .admin-section.active { display: block; }
-        .admin-section .admin-card {
-            background: white;
-            border-radius: 12px;
-            padding: 3vh 3vw;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .admin-list { max-height: 50vh; overflow-y: auto; margin-top: 2vh; }
-        .admin-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1vh 1.5vw;
-            background: #ffffff;
-            border-radius: 6px;
-            margin-bottom: 0.5vh;
-        }
-        .admin-item:nth-child(even) { background: #f2f2f2; }
-        .admin-item-actions { display: flex; gap: 0.5vw; align-items: center; }
-        .admin-item-actions button {
-            padding: 0.5vh 1vw;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-size: 0.8rem;
-            min-width: 28px;
-        }
-        .btn-up { background: var(--green); }
-        .btn-down { background: var(--orange); }
-        .btn-edit { background: var(--blue); }
-        .btn-delete { background: var(--red); }
-
-        .input-group {
-            display: flex;
-            gap: 1vw;
-            margin-bottom: 2vh;
-            flex-wrap: wrap;
-        }
-        .input-group input, .input-group select, .input-group textarea {
-            flex: 1 1 140px;
-            padding: 1.5vh 1.5vw;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .input-group textarea { flex: 2 1 300px; min-height: 80px; }
-        .input-group button {
-            padding: 1.5vh 3vw;
-            background: var(--green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        #modal-login .modal-content { max-width: 400px; text-align: center; }
-        .pin-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-        .pin-btn {
-            padding: 15px 0;
-            font-size: 1.8rem;
-            border: none;
-            border-radius: 12px;
-            background: var(--blue);
-            color: white;
-            cursor: pointer;
-        }
-        .pin-display {
-            font-size: 1.8rem;
-            letter-spacing: 0.5rem;
-            padding: 10px;
-            background: #eee;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .pin-footer { display: flex; gap: 12px; margin-top: 15px; }
-        .pin-footer button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; color: white; }
-        .btn-clear { background: var(--red); }
-        .btn-ok { background: var(--green); }
-
-        .toast-message {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--dark);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 1rem;
-            z-index: 3000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-        .toast-message.show { opacity: 1; }
-        .clear-cart-btn {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 0.5vh 2vw;
-            border-radius: 5px;
-            font-size: clamp(0.6rem, 2vh, 0.9rem);
-            font-weight: bold;
-        }
-        .btn-main { 
-            width: 100%; 
-            padding: 14px; 
-            border: none; 
-            border-radius: 10px; 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-top: 1vh; 
-            color: white; 
-        }
-        .table-box { 
-            background: var(--orange); 
-            color: white; 
-            padding: 3vh 2vw; 
-            border-radius: 20px; 
-            text-align: center; 
-            cursor: pointer; 
-            font-size: clamp(1.2rem, 3vh, 1.8rem); 
-            min-height: 150px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-        }
-        .table-box button {
-            font-size: 0.6em;
-            padding: 5px;
-            margin: 2px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .stats-summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2vw;
-            margin-bottom: 3vh;
-        }
-        .stat-card {
-            background: var(--blue);
-            color: white;
-            padding: 2vh;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .stats-tabs { display: flex; gap: 2vw; margin-bottom: 2vh; }
-        .stats-tab-btn {
-            padding: 1vh 2vw;
-            border: none;
-            border-radius: 8px;
-            background: var(--light);
-            cursor: pointer;
-        }
-        .stats-tab-btn.active { background: var(--blue); color: white; }
-        .stats-table { max-height: 40vh; overflow-y: auto; }
-        .stats-table table { width: 100%; border-collapse: collapse; }
-        .stats-table th { background: var(--dark); color: white; padding: 1vh; position: sticky; top: 0; }
-        .stats-table td { padding: 1vh; border-bottom: 1px solid #ddd; }
-
-        /* New Mic Button Position - Inside Cart Above Send Button */
         .mic-button-container {
-            margin: 10px 0 5px 0;
+            margin: 10px 0 5px;
             text-align: center;
         }
+
         .main-mic-btn {
             background: #e74c3c;
             color: white;
@@ -626,23 +336,64 @@
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: all 0.2s;
             width: 100%;
+            display: flex;
+            align-items: center;
             justify-content: center;
-        }
-        .main-mic-btn:active {
-            transform: scale(0.97);
-        }
-        .main-mic-btn.recording {
-            background: #ff0000;
-            animation: pulse 1s infinite;
+            gap: 10px;
         }
 
-        /* Voice Modal - Improved Layout for Mobile */
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            color: white;
+            background: var(--green);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 10vh auto;
+            padding: 20px;
+            border-radius: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 32px;
+            cursor: pointer;
+            color: var(--red);
+            background: none;
+            border: none;
+        }
+
+        /* Voice modal */
         .voice-modal {
             position: fixed;
             top: 0;
@@ -655,6 +406,7 @@
             align-items: center;
             justify-content: center;
         }
+
         .voice-content {
             background: white;
             border-radius: 28px;
@@ -664,20 +416,22 @@
             overflow-y: auto;
             padding: 20px;
         }
+
         .voice-search-box {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
+
         .voice-search-box input {
             flex: 1;
             padding: 12px;
             border: 2px solid var(--blue);
             border-radius: 16px;
             font-size: 1rem;
-            min-width: 180px;
         }
+
         .voice-mic-small {
             width: 48px;
             height: 48px;
@@ -687,8 +441,8 @@
             border: none;
             font-size: 22px;
             cursor: pointer;
-            flex-shrink: 0;
         }
+
         .voice-result {
             background: #f0f8ff;
             border-radius: 20px;
@@ -696,180 +450,124 @@
             margin-bottom: 20px;
             text-align: center;
         }
-        .voice-result h3 {
-            color: var(--green);
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-        }
+
         .voice-result .product-name {
             font-size: 1.3rem;
             font-weight: bold;
             margin: 10px 0;
         }
-        .voice-result .price {
-            color: var(--blue);
-            font-size: 1.2rem;
-        }
-        .voice-result .similarity {
-            color: var(--gray);
-            font-size: 0.8rem;
-            margin-top: 8px;
-        }
-        .voice-note-box {
-            margin-bottom: 20px;
-        }
-        .voice-note-box label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
+
         .voice-note-input {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
+            margin-top: 8px;
         }
+
         .voice-note-input input {
             flex: 1;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 12px;
-            min-width: 150px;
         }
+
         .voice-note-mic {
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: #e74c3c;
             color: white;
             border: none;
             font-size: 18px;
             cursor: pointer;
-            flex-shrink: 0;
         }
+
         .voice-actions {
             display: flex;
             gap: 12px;
             margin-top: 20px;
         }
+
         .voice-actions button {
             flex: 1;
             padding: 12px;
             border: none;
             border-radius: 16px;
             font-weight: bold;
-            font-size: 1rem;
             cursor: pointer;
         }
-        .btn-add { background: var(--green); color: white; }
-        .btn-close { background: var(--red); color: white; }
 
-        @media (orientation: landscape) { header { height: 15vh; } }
-/* ========== تحسينات خاصة للهواتف المحمولة ========== */
-@media (max-width: 768px) {
-    /* جعل الخلايا أكبر وأسهل للنقر */
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 15px;
-    }
-    .card {
-        padding: 20px 8px;
-        font-size: 1rem;
-    }
-    .prod-price {
-        font-size: 1.3rem;
-    }
-    .recipe-btn {
-        padding: 12px;
-        font-size: 0.9rem;
-    }
+        .btn-add {
+            background: var(--green);
+            color: white;
+        }
 
-    /* تحسين السلة (Warenkorb) */
-    #cart-container {
-        padding: 15px;
-    }
-    .cart-item {
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-    .cart-item-name {
-        font-size: 1.1rem;
-    }
-    .cart-item-prices {
-        font-size: 1rem;
-        gap: 10px;
-    }
-    .cart-item-quantity {
-        font-size: 1rem;
-        padding: 4px 10px;
-    }
+        .btn-close {
+            background: var(--red);
+            color: white;
+        }
 
-    /* أزرار التحكم في السلة */
-    .action-btns {
-        gap: 12px;
-        margin-top: 15px;
-    }
-    .btn-sm {
-        padding: 10px 18px;
-        font-size: 0.9rem;
-        min-width: 65px;
-    }
+        /* Admin tables */
+        .admin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
 
-    /* شريط الإجمالي وزر الإرسال */
-    .cart-total-bar {
-        font-size: 1.6rem;
-        padding: 15px;
-    }
-    .btn-main {
-        padding: 16px;
-        font-size: 1.2rem;
-    }
+        .admin-item-actions button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+        }
 
-    /* زر المايك الرئيسي داخل السلة */
-    .main-mic-btn {
-        padding: 14px 20px;
-        font-size: 1.1rem;
-        width: 100%;
-    }
+        .btn-up {
+            background: var(--green);
+        }
 
-    /* تحسين النوافذ المنبثقة للصوت */
-    .voice-content {
-        width: 95%;
-        padding: 20px;
-    }
-    .voice-search-box input {
-        font-size: 1rem;
-        padding: 14px;
-    }
-    .voice-mic-small {
-        width: 55px;
-        height: 55px;
-        font-size: 24px;
-    }
-    .voice-result .product-name {
-        font-size: 1.4rem;
-    }
-    .voice-note-input input {
-        padding: 12px;
-    }
-    .voice-note-mic {
-        width: 48px;
-        height: 48px;
-        font-size: 20px;
-    }
-    .voice-actions button {
-        padding: 14px;
-        font-size: 1rem;
-    }
+        .btn-down {
+            background: var(--orange);
+        }
 
-    /* رؤوس الأزرار العلوية */
-    header button {
-        padding: 8px 12px;
-        font-size: 0.85rem;
-    }
-    header h2 {
-        font-size: 1.3rem;
-    }
-}
+        .btn-edit {
+            background: var(--blue);
+        }
+
+        .btn-delete {
+            background: var(--red);
+        }
+
+        .table-box {
+            background: var(--orange);
+            color: white;
+            padding: 15px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 3000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast-message.show {
+            opacity: 1;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -879,12 +577,15 @@
 <div id="toast" class="toast-message"></div>
 
 <header>
-    <button onclick="openKitchen()">KÜCHE</button>
     <h2>DIE PRIMEL</h2>
-    <div>
-        <button onclick="openTables()">TISCHE</button>
-        <button onclick="showLoginModal()">ADMIN</button>
-        <button style="background:#ff5722;" onclick="callWaiter()">🔔 RUF</button>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="ruf-btn" onclick="callWaiter()">🔔 RUF</button>
+        <button class="hamburger" id="hamburgerBtn">☰</button>
+        <div class="nav-menu" id="navMenu">
+            <button onclick="openKitchen()">KÜCHE</button>
+            <button onclick="openTables()">TISCHE</button>
+            <button onclick="showLoginModal()">ADMIN</button>
+        </div>
     </div>
 </header>
 
@@ -898,812 +599,96 @@
     </section>
 
     <section id="cart-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1vh;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h2 id="cart-title">Warenkorb</h2>
-            <button onclick="clearFullCart()" class="clear-cart-btn">ALLES LÖSCHEN</button>
+            <button onclick="clearFullCart()" style="background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 8px;">ALLES LÖSCHEN</button>
         </div>
         <div id="cart-list" class="cart-items"></div>
         <div id="cart-total-bar" class="cart-total-bar">0.00 €</div>
-        <!-- New Mic Button Position: Centered above send button -->
         <div class="mic-button-container">
             <button id="main-mic-btn" class="main-mic-btn">🎤 Sprachbestellung</button>
         </div>
-        <div style="border-top: 4px solid var(--dark); padding-top: 1vh;">
-            <button class="btn-main" style="background:var(--green)" onclick="initiateSend()">BESTELLUNG SENDEN</button>
-        </div>
+        <button class="btn-main" onclick="initiateSend()">BESTELLUNG SENDEN</button>
     </section>
 </main>
 
-<!-- Recipe View Modal -->
-<div id="modal-recipe-view" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-recipe-view')">&times;</button>
-        <div id="recipe-content">
-            <div class="recipe-title" id="recipe-title">...</div>
-            <div class="recipe-section">
-                <h3>📋 Zutaten</h3>
-                <div class="recipe-ingredients" id="recipe-ingredients">-</div>
-            </div>
-            <div class="recipe-section">
-                <h3>👨‍🍳 Zubereitung</h3>
-                <div class="recipe-instructions" id="recipe-instructions">-</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Login Modal -->
-<div id="modal-login" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-login')">&times;</button>
-        <h2>Admin Login</h2>
-        <div class="pin-display" id="pin-display"></div>
-        <div class="pin-pad" id="pin-pad"></div>
-        <div class="pin-footer">
-            <button class="btn-clear" onclick="clearPin()">Löschen</button>
-            <button class="btn-ok" onclick="submitPin()">OK</button>
-        </div>
-    </div>
-</div>
-
-<!-- Admin Modal -->
-<div id="modal-admin" class="modal">
-    <div class="modal-content">
-        <div class="admin-header">
-            <h1>Admin Management</h1>
-            <button class="close" onclick="closeModal('modal-admin')">&times;</button>
-        </div>
-        <div class="admin-tabs">
-            <button class="admin-tab-btn active" data-tab="categories">Kategorien</button>
-            <button class="admin-tab-btn" data-tab="products">Produkte</button>
-            <button class="admin-tab-btn" data-tab="extras">Extras</button>
-            <button class="admin-tab-btn" data-tab="zutaten">Zutaten</button>
-        </div>
-        <div class="admin-body">
-            <div id="admin-categories-section" class="admin-section active">
-                <div class="admin-card">
-                    <h3>Kategorien verwalten</h3>
-                    <div class="input-group">
-                        <input type="text" id="new-cat-name" placeholder="Name">
-                        <button onclick="addCategory()">Hinzufügen</button>
-                    </div>
-                    <div class="admin-list" id="admin-cat-list"></div>
-                </div>
-            </div>
-            <div id="admin-products-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Produkte verwalten</h3>
-                    <div style="margin-bottom: 2vh;">
-                        <label>Kategorie filtern:</label>
-                        <select id="admin-prod-filter" onchange="renderProductsAdmin()"></select>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" id="p-name" placeholder="Name">
-                        <input type="number" id="p-price" placeholder="Preis">
-                        <select id="p-cat-select"></select>
-                        <button onclick="addProduct()">+</button>
-                    </div>
-                    <div class="admin-list" id="admin-product-list"></div>
-                </div>
-            </div>
-            <div id="admin-extras-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Extras verwalten</h3>
-                    <div class="input-group">
-                        <input type="text" id="ex-name" placeholder="Name">
-                        <input type="number" id="ex-price" placeholder="Preis">
-                        <button onclick="addExtra('extra')">+</button>
-                    </div>
-                    <div class="admin-list" id="admin-ex-list"></div>
-                </div>
-            </div>
-            <div id="admin-zutaten-section" class="admin-section">
-                <div class="admin-card">
-                    <h3>Zutaten verwalten</h3>
-                    <div class="input-group">
-                        <input type="text" id="zut-name" placeholder="Name">
-                        <input type="number" id="zut-price" placeholder="Preis">
-                        <button onclick="addExtra('zutat')">+</button>
-                    </div>
-                    <div class="admin-list" id="admin-zut-list"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Stats Modal -->
-<div id="modal-stats" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-stats')">&times;</button>
-        <h2>Statistiken & Berichte</h2>
-        <div class="stats-header">
-            <select id="stats-period" onchange="onStatsPeriodChange()">
-                <option value="today">Heute</option>
-                <option value="yesterday">Gestern</option>
-                <option value="week">Diese Woche</option>
-                <option value="month">Dieser Monat</option>
-                <option value="custom">Benutzerdefiniert</option>
-            </select>
-            <input type="date" id="stats-from" style="display:none;" onchange="loadStats()">
-            <input type="date" id="stats-to" style="display:none;" onchange="loadStats()">
-        </div>
-        <div class="stats-summary">
-            <div class="stat-card"><h3>Gesamtumsatz</h3><div class="value" id="stats-total">0.00 €</div></div>
-            <div class="stat-card"><h3>Anzahl Bestellungen</h3><div class="value" id="stats-count">0</div></div>
-            <div class="stat-card"><h3>Durchschnitt</h3><div class="value" id="stats-avg">0.00 €</div></div>
-            <div class="stat-card"><h3>Anzahl Artikel</h3><div class="value" id="stats-items">0</div></div>
-        </div>
-        <div class="stats-tabs">
-            <button class="stats-tab-btn active" onclick="switchStatsTab('orders')">Bestellungen</button>
-            <button class="stats-tab-btn" onclick="switchStatsTab('products')">Produkte</button>
-        </div>
-        <div id="stats-orders-section"><div class="stats-table"><table><thead><tr><th>#</th><th>Datum</th><th>Uhrzeit</th><th>Tisch</th><th>Artikel</th><th>Betrag</th></tr></thead><tbody id="stats-orders-list"></tbody></table></div></div>
-        <div id="stats-products-section" style="display:none;"><div class="stats-table"><table><thead><tr><th>Produkt</th><th>Menge</th><th>Umsatz</th></tr></thead><tbody id="stats-products-list"></tbody></td></div></div>
-    </div>
-</div>
-
-<!-- Table Grid Modal -->
-<div id="modal-table-grid" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-table-grid')">&times;</button>
-        <h2 style="text-align: center;">Tisch auswählen</h2>
-        <div id="selected-table-display" class="selected-display">Kein Tisch gewählt</div>
-        <div class="table-grid" id="table-grid"></div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeModal('modal-table-grid')">Abbrechen</button>
-            <button class="btn-confirm" onclick="confirmTableSelection()">Bestätigen</button>
-            <button class="btn-confirm" style="background:var(--orange)" onclick="selectTakeaway()">Takeaway</button>
-        </div>
-    </div>
-</div>
-
-<!-- Show Order Modal -->
-<div id="modal-show-order" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-show-order'); return false;">&times;</button><h2 id="show-order-title" style="text-align: center;">Bestellung</h2><div id="show-order-items" class="order-items"></div><div id="show-order-total" class="order-total">0.00 €</div><div style="display: flex; gap: 2vw;"><button class="btn-main" style="background: var(--red); margin:0;" onclick="confirmDeleteTable()">Tisch löschen</button><button class="btn-main" style="background: var(--blue); margin:0;" onclick="closeModal('modal-show-order'); return false;">Schließen</button></div></div></div>
-
-<!-- Confirm Modal -->
-<div id="modal-confirm" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-confirm')">&times;</button>
-        <h3 id="confirm-message" style="margin: 2vh 0;">Sind Sie sicher?</h3>
-        <div class="confirm-actions">
-            <button class="btn-confirm" onclick="executeConfirm()">Ja</button>
-            <button class="btn-cancel" onclick="closeModal('modal-confirm')">Nein</button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Modal -->
-<div id="modal-edit" class="modal">
-    <div class="modal-content">
-        <button class="close" onclick="closeModal('modal-edit')">&times;</button>
-        <h3 id="edit-title">Bearbeiten</h3>
-        <input type="text" id="edit-input" placeholder="Name" style="width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd;">
-        <input type="number" id="edit-price" placeholder="Preis" style="display:none; width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ddd;">
-        <textarea id="edit-recipe-ingredients" placeholder="Zutaten (z.B. 200g Mehl, 100g Zucker...)" rows="4" style="display:none; width:100%; margin:10px 0; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
-        <textarea id="edit-recipe-instructions" placeholder="Zubereitung (z.B. Backofen vorheizen, Teig kneten...)" rows="6" style="display:none; width:100%; margin:10px 0; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
-        <div class="edit-actions" style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-confirm" onclick="saveEdit()" style="flex:1; padding:12px; background:var(--green); color:white; border:none; border-radius:8px; font-weight:bold;">Speichern</button>
-            <button class="btn-cancel" onclick="closeModal('modal-edit')" style="flex:1; padding:12px; background:var(--red); color:white; border:none; border-radius:8px; font-weight:bold;">Abbrechen</button>
-        </div>
-    </div>
-</div>
-
-<!-- Extra Type Selector Modal -->
-<div id="modal-extra-type" class="modal">
-    <div class="modal-content" style="max-width:400px; text-align:center;">
-        <button class="close" onclick="closeModal('modal-extra-type')">&times;</button>
-        <h2>Wähle Extra-Typ</h2>
-        <div class="extra-type-grid">
-            <button class="extra-type-btn extras" onclick="selectExtraType('extras')">Extras</button>
-            <button class="extra-type-btn zutaten" onclick="selectExtraType('zutaten')">Zutaten</button>
-        </div>
-    </div>
-</div>
-
-<!-- Kitchen Modal -->
-<div id="modal-kitchen" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-kitchen')">&times;</button><h1>KÜCHE - BESTELLUNGEN</h1><div id="kitchen-content" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;"></div></div></div>
-
-<!-- Tables Modal -->
-<div id="modal-tables" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-tables'); return false;">&times;</button><h2>AKTIVE TISCHE</h2><div id="tables-grid" class="grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));"></div><div style="margin-top: 2vh; text-align: center;"><button class="btn-main" style="background: var(--blue); width: auto; padding: 1vh 4vw;" onclick="closeModal('modal-tables')">Schließen</button></div></div></div>
-
-<!-- Extras Modal -->
-<div id="modal-extras" class="modal">
-    <div class="modal-content" style="max-width:400px">
-        <button class="close" onclick="closeModal('modal-extras')">&times;</button>
-        <h3 id="extras-modal-title">Extras wählen</h3>
-        <div id="extras-grid"></div>
-    </div>
-</div>
-
-<!-- Pay Modal -->
-<div id="modal-pay" class="modal"><div class="modal-content" style="max-width:400px; text-align:center"><button class="close" onclick="closeModal('modal-pay')">&times;</button><h2 id="pay-title">Zahlung</h2><h1 id="pay-amount" style="font-size:50px">0.00 €</h1><button class="btn-main" style="background:var(--green)" onclick="processPay('Bar')">BAR</button><button class="btn-main" style="background:var(--blue)" onclick="processPay('Karte')">KARTE</button></div></div>
-
-<!-- Note Modal with Mic Button -->
-<div id="modal-note" class="modal">
-    <div class="modal-content" style="max-width:400px; text-align:center;">
-        <button class="close" onclick="closeModal('modal-note')">&times;</button>
-        <h3>Notiz für <span id="note-item-name"></span></h3>
-        <div style="position: relative;">
-            <textarea id="note-text-input" rows="4" style="width:100%; padding:2vh; border-radius:10px; border:1px solid #ccc; font-size:clamp(1rem,2.5vh,1.2rem); margin-bottom:2vh; padding-right: 45px;"></textarea>
-            <button id="note-mic-btn" style="position: absolute; bottom: 18px; right: 10px; background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">🎤</button>
-        </div>
-        <button class="btn-main" style="background:var(--green)" onclick="saveNote()">SPEICHERN</button>
-    </div>
-</div>
+<!-- Modals -->
+<div id="modal-login" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-login')">&times;</button><h2>Admin Login</h2><div class="pin-display" id="pin-display"></div><div class="pin-pad" id="pin-pad"></div><div class="pin-footer"><button class="btn-clear" onclick="clearPin()">Löschen</button><button class="btn-ok" onclick="submitPin()">OK</button></div></div></div>
+<div id="modal-admin" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-admin')">&times;</button><div class="admin-header"><h1>Admin Management</h1></div><div class="admin-tabs"><button class="admin-tab-btn active" data-tab="categories">Kategorien</button><button class="admin-tab-btn" data-tab="products">Produkte</button><button class="admin-tab-btn" data-tab="extras">Extras</button><button class="admin-tab-btn" data-tab="zutaten">Zutaten</button></div><div id="admin-categories-section" class="admin-section active"><div class="admin-card"><h3>Kategorien verwalten</h3><div class="input-group"><input type="text" id="new-cat-name" placeholder="Name"><button onclick="addCategory()">Hinzufügen</button></div><div id="admin-cat-list"></div></div></div><div id="admin-products-section" class="admin-section"><div class="admin-card"><h3>Produkte verwalten</h3><select id="admin-prod-filter" onchange="renderProductsAdmin()"></select><div class="input-group"><input type="text" id="p-name" placeholder="Name"><input type="number" id="p-price" placeholder="Preis"><select id="p-cat-select"></select><button onclick="addProduct()">+</button></div><div id="admin-product-list"></div></div></div><div id="admin-extras-section" class="admin-section"><div class="admin-card"><h3>Extras verwalten</h3><div class="input-group"><input type="text" id="ex-name" placeholder="Name"><input type="number" id="ex-price" placeholder="Preis"><button onclick="addExtra('extra')">+</button></div><div id="admin-ex-list"></div></div></div><div id="admin-zutaten-section" class="admin-section"><div class="admin-card"><h3>Zutaten verwalten</h3><div class="input-group"><input type="text" id="zut-name" placeholder="Name"><input type="number" id="zut-price" placeholder="Preis"><button onclick="addExtra('zutat')">+</button></div><div id="admin-zut-list"></div></div></div></div></div>
+<div id="modal-stats" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-stats')">&times;</button><h2>Statistiken</h2><div class="stats-summary"><div class="stat-card"><h3>Umsatz</h3><div id="stats-total">0€</div></div><div class="stat-card"><h3>Bestellungen</h3><div id="stats-count">0</div></div></div><div id="stats-orders-list"></div></div></div>
+<div id="modal-table-grid" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-table-grid')">&times;</button><h2>Tisch auswählen</h2><div id="selected-table-display">Kein Tisch</div><div id="table-grid" class="table-grid"></div><div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-table-grid')">Abbrechen</button><button class="btn-confirm" onclick="confirmTableSelection()">Bestätigen</button><button class="btn-confirm" onclick="selectTakeaway()">Takeaway</button></div></div></div>
+<div id="modal-show-order" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-show-order')">&times;</button><h2 id="show-order-title">Bestellung</h2><div id="show-order-items"></div><div id="show-order-total"></div><button class="btn-main" style="background:var(--red)" onclick="confirmDeleteTable()">Tisch löschen</button></div></div>
+<div id="modal-confirm" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-confirm')">&times;</button><h3 id="confirm-message">Sicher?</h3><div class="confirm-actions"><button class="btn-confirm" onclick="executeConfirm()">Ja</button><button class="btn-cancel" onclick="closeModal('modal-confirm')">Nein</button></div></div></div>
+<div id="modal-edit" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-edit')">&times;</button><h3 id="edit-title">Bearbeiten</h3><input type="text" id="edit-input" placeholder="Name"><input type="number" id="edit-price" placeholder="Preis" style="display:none"><textarea id="edit-recipe-ingredients" placeholder="Zutaten" rows="3" style="display:none"></textarea><textarea id="edit-recipe-instructions" placeholder="Zubereitung" rows="4" style="display:none"></textarea><div class="edit-actions"><button class="btn-confirm" onclick="saveEdit()">Speichern</button><button class="btn-cancel" onclick="closeModal('modal-edit')">Abbrechen</button></div></div></div>
+<div id="modal-extra-type" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-extra-type')">&times;</button><h2>Extra-Typ</h2><div class="extra-type-grid"><button class="extra-type-btn extras" onclick="selectExtraType('extras')">Extras</button><button class="extra-type-btn zutaten" onclick="selectExtraType('zutaten')">Zutaten</button></div></div></div>
+<div id="modal-kitchen" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-kitchen')">&times;</button><h1>KÜCHE</h1><div id="kitchen-content"></div></div></div>
+<div id="modal-tables" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-tables')">&times;</button><h2>AKTIVE TISCHE</h2><div id="tables-grid"></div><button class="btn-main" onclick="closeModal('modal-tables')">Schließen</button></div></div>
+<div id="modal-extras" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-extras')">&times;</button><h3 id="extras-modal-title">Extras</h3><div id="extras-grid"></div></div></div>
+<div id="modal-pay" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-pay')">&times;</button><h2>Zahlung</h2><h1 id="pay-amount">0€</h1><button class="btn-main" style="background:var(--green)" onclick="processPay('Bar')">BAR</button><button class="btn-main" style="background:var(--blue)" onclick="processPay('Karte')">KARTE</button></div></div>
+<div id="modal-note" class="modal"><div class="modal-content"><button class="close" onclick="closeModal('modal-note')">&times;</button><h3>Notiz für <span id="note-item-name"></span></h3><div style="position:relative"><textarea id="note-text-input" rows="3"></textarea><button id="note-mic-btn" style="position:absolute; bottom:10px; right:10px; background:#e74c3c; border:none; border-radius:50%; width:32px; height:32px; color:white;">🎤</button></div><button class="btn-main" onclick="saveNote()">SPEICHERN</button></div></div>
 
 <script>
-    // ========== FIREBASE CONFIG ==========
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCjHwRY3J7KHr4DaX15mWfXvrGUleJk32Q",
         authDomain: "primelpos.firebaseapp.com",
-        databaseURL: "https://primelpos-default-rtdb.europe-west1.firebasedatabase.app/", 
+        databaseURL: "https://primelpos-default-rtdb.europe-west1.firebasedatabase.app/",
         projectId: "primelpos",
         storageBucket: "primelpos.firebasestorage.app",
         messagingSenderId: "151403014246",
         appId: "1:151403014246:web:d88248fa3e2505b7dda5a7"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const KITCHEN_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
-    const WAITER_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3';
-
-    function playSound(url) { const audio = new Audio(url); audio.play().catch(e => console.log('Audio play failed:', e)); }
-    function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
-
-    db.ref('notifications/waiter').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(WAITER_SOUND_URL); });
-    db.ref('notifications/kitchen').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(KITCHEN_SOUND_URL); });
-
+    // Data
     let categories = JSON.parse(localStorage.getItem('cats')) || [];
     let products = JSON.parse(localStorage.getItem('prods')) || [];
     let extras = JSON.parse(localStorage.getItem('extras')) || [];
     let zutaten = JSON.parse(localStorage.getItem('zutaten')) || [];
     let orders = JSON.parse(localStorage.getItem('orders')) || [];
     let sales = JSON.parse(localStorage.getItem('sales')) || [];
-    
-    let cartNew = [];
-    let cartLocked = [];
-    let activeTable = null;
-    let currentItemIdx = null;
-    let currentNoteIdx = null;
-    let selectedTable = null;
-    let confirmCallback = null;
-    let editContext = { type: null, id: null, name: '', price: null, ingredients: '', instructions: '' };
-    let currentShowTable = null;
-    let currentPin = '';
-    
-    // Voice Recognition
+    let cartNew = [], cartLocked = [], activeTable = null;
+    let currentItemIdx, currentNoteIdx, selectedTable, confirmCallback, editContext = {};
+    let currentShowTable, currentPin = '';
     let mainRecognition = null;
-    let isMainRecording = false;
 
-    // ========== IMPROVED LETTER MATCHING ALGORITHM (WITH SPACE REMOVAL) ==========
-    function calculateLetterMatchScore(productName, spokenText) {
-        // Normalize: remove spaces, convert to lowercase
-        const pNameNorm = productName.toLowerCase().replace(/\s/g, '');
-        const sTextNorm = spokenText.toLowerCase().replace(/\s/g, '');
-        
-        // 1. Exact match after removing spaces (highest priority)
-        if (pNameNorm === sTextNorm) return 100;
-        
-        // 2. One contains the other
-        if (pNameNorm.includes(sTextNorm)) return 95;
-        if (sTextNorm.includes(pNameNorm)) return 90;
-        
-        const pName = productName.toLowerCase();
-        const sText = spokenText.toLowerCase();
-        
-        // 3. Word-by-word matching with original spacing
-        const pWords = pName.split(' ');
-        const sWords = sText.split(' ');
-        let wordBonus = 0;
-        
-        // Check first word match (important for "Amarena" vs "Amaretto")
-        if (pWords[0] === sWords[0]) {
-            wordBonus += 40;
-        } else if (pWords[0] && sWords[0] && pWords[0][0] === sWords[0][0]) {
-            wordBonus += 15;
-        }
-        
-        // Check if any full word matches
-        for (let pw of pWords) {
-            if (pw.length > 2 && sText.includes(pw)) {
-                wordBonus += 20;
-            }
-        }
-        for (let sw of sWords) {
-            if (sw.length > 2 && pName.includes(sw)) {
-                wordBonus += 15;
-            }
-        }
-        
-        // 4. Letter matching (without spaces for better accuracy)
-        let matchedLetters = 0;
-        let usedIndices = [];
-        for (let char of sTextNorm) {
-            for (let i = 0; i < pNameNorm.length; i++) {
-                if (!usedIndices.includes(i) && pNameNorm[i] === char) {
-                    matchedLetters++;
-                    usedIndices.push(i);
-                    break;
-                }
-            }
-        }
-        const maxPossible = Math.max(pNameNorm.length, sTextNorm.length);
-        let letterRatio = (matchedLetters / maxPossible) * 60; // max 60%
-        
-        // 5. First letter bonus
-        let firstLetterBonus = 0;
-        if (pNameNorm.charAt(0) === sTextNorm.charAt(0)) {
-            firstLetterBonus = 5;
-        }
-        
-        let finalScore = Math.min(99, Math.round(letterRatio + wordBonus + firstLetterBonus));
-        return finalScore;
+    // Helper functions
+    function showToast(msg) { let t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; if (id === 'modal-tables' && window.tablesListener) { db.ref('active_orders').off('value', window.tablesListener); window.tablesListener = null; } }
+    function save() { localStorage.setItem('cats', JSON.stringify(categories)); localStorage.setItem('prods', JSON.stringify(products)); localStorage.setItem('extras', JSON.stringify(extras)); localStorage.setItem('zutaten', JSON.stringify(zutaten)); localStorage.setItem('orders', JSON.stringify(orders)); localStorage.setItem('sales', JSON.stringify(sales)); db.ref('data').set({ categories, products, extras, zutaten, orders, sales }); }
+
+    // Render categories and products
+    function renderCats() {
+        const grid = document.getElementById('cat-grid');
+        grid.innerHTML = categories.map(c => `<div class="card cat-card" onclick="renderProds(${c.id})">${c.name}</div>`).join('');
+        const catSelect = document.getElementById('p-cat-select');
+        if (catSelect) catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     }
-
-    function findBestMatchingProduct(spokenText) {
-        let matches = [];
-        const searchText = spokenText.toLowerCase().replace(/\s/g, '');
-        
-        // First, try exact match after removing spaces
-        const exactMatch = products.find(p => p.name.toLowerCase().replace(/\s/g, '') === searchText);
-        if (exactMatch) {
-            console.log("Exact match found (no spaces):", exactMatch.name);
-            return { product: exactMatch, score: 100 };
-        }
-        
-        for (let p of products) {
-            let score = calculateLetterMatchScore(p.name, spokenText);
-            matches.push({ product: p, score: score, nameLength: p.name.length });
-        }
-        
-        // Sort by score desc, then by name length desc (longer names are more specific)
-        matches.sort((a, b) => {
-            if (a.score !== b.score) return b.score - a.score;
-            return b.nameLength - a.nameLength;
-        });
-        
-        console.log("=== Voice Search ===");
-        console.log("Spoken:", spokenText);
-        console.log("Top 3 matches:");
-        matches.slice(0, 3).forEach(m => {
-            console.log(`  ${m.product.name}: ${m.score}%`);
-        });
-        
-        if (matches.length > 0 && matches[0].score >= 40) {
-            return { product: matches[0].product, score: matches[0].score };
-        }
-        return null;
+    function renderProds(cid) {
+        const grid = document.getElementById('prod-grid');
+        const filtered = products.filter(p => p.catId === cid).sort((a,b)=>a.order-b.order);
+        grid.innerHTML = filtered.map(p => `<div class="card prod-card"><div onclick="addToCart(${p.id})">${p.name}</div><div class="prod-price" onclick="addToCart(${p.id})">${p.price.toFixed(2)}€</div><button class="recipe-btn" onclick="event.stopPropagation(); showRecipe(${p.id})">📖 Rezept</button></div>`).join('');
     }
-
-    // ========== VOICE MODAL FUNCTIONS ==========
-    function showVoiceModal() {
-        // Remove existing modal if any
-        const existing = document.querySelector('.voice-modal');
-        if (existing) existing.remove();
-        
-        const modalHtml = `
-            <div class="voice-modal">
-                <div class="voice-content">
-                    <div class="voice-search-box">
-                        <input type="text" id="voice-search-input" placeholder="Sagen Sie den Namen des Gerichts..." autocomplete="off">
-                        <button id="voice-search-mic" class="voice-mic-small">🎤</button>
-                    </div>
-                    <div id="voice-result-container">
-                        <div class="voice-result">
-                            <h3>🎤 Sprechen Sie jetzt...</h3>
-                            <div class="similarity">Drücken Sie auf das Mikrofon und sagen Sie den Namen</div>
-                        </div>
-                    </div>
-                    <div class="voice-note-box">
-                        <label>📝 Notiz (optional):</label>
-                        <div class="voice-note-input">
-                            <input type="text" id="voice-note-input" placeholder="z.B. ohne Zwiebeln, extra Käse...">
-                            <button id="voice-note-mic" class="voice-note-mic">🎤</button>
-                        </div>
-                    </div>
-                    <div class="voice-actions">
-                        <button id="voice-add-btn" class="btn-add" disabled>➕ Zum Warenkorb hinzufügen</button>
-                        <button id="voice-close-btn" class="btn-close">❌ Schließen</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
-        const searchInput = document.getElementById('voice-search-input');
-        const searchMic = document.getElementById('voice-search-mic');
-        const noteInput = document.getElementById('voice-note-input');
-        const noteMic = document.getElementById('voice-note-mic');
-        const addBtn = document.getElementById('voice-add-btn');
-        const closeBtn = document.getElementById('voice-close-btn');
-        
-        let currentBestProduct = null;
-        let currentScore = 0;
-        
-        function updateResult(product, score) {
-            currentBestProduct = product;
-            currentScore = score;
-            const container = document.getElementById('voice-result-container');
-            if (product) {
-                container.innerHTML = `
-                    <div class="voice-result">
-                        <h3>✅ Beste Übereinstimmung</h3>
-                        <div class="product-name">${product.name}</div>
-                        <div class="price">${product.price.toFixed(2)} €</div>
-                        <div class="similarity">Ähnlichkeit: ${score}%</div>
-                    </div>
-                `;
-                addBtn.disabled = false;
-            } else {
-                container.innerHTML = `
-                    <div class="voice-result">
-                        <h3>❌ Kein Produkt gefunden</h3>
-                        <div class="similarity">Versuchen Sie es mit einem anderen Namen</div>
-                    </div>
-                `;
-                addBtn.disabled = true;
-                currentBestProduct = null;
-            }
-        }
-        
-        function searchFromText() {
-            const text = searchInput.value.trim();
-            if (text === "") {
-                updateResult(null, 0);
-                return;
-            }
-            const match = findBestMatchingProduct(text);
-            if (match) {
-                updateResult(match.product, match.score);
-            } else {
-                updateResult(null, 0);
-            }
-        }
-        
-        function startMainRecording() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showToast("❌ Sprachaufnahme wird nicht unterstützt");
-                return;
-            }
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (mainRecognition) {
-                try { mainRecognition.stop(); } catch(e) {}
-            }
-            mainRecognition = new SpeechRecognition();
-            mainRecognition.lang = 'de-DE';
-            mainRecognition.continuous = false;
-            mainRecognition.interimResults = false;
-            
-            mainRecognition.onstart = () => {
-                isMainRecording = true;
-                searchMic.innerHTML = "🔴";
-                searchMic.style.background = "#ff0000";
-                showToast("🎤 Höre zu...");
-            };
-            
-            mainRecognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                searchInput.value = transcript;
-                searchFromText();
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-            };
-            
-            mainRecognition.onerror = () => {
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-                showToast("❌ Fehler bei der Spracherkennung");
-            };
-            
-            mainRecognition.onend = () => {
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-            };
-            
-            try {
-                mainRecognition.start();
-            } catch(e) {
-                showToast("❌ Mikrofon konnte nicht gestartet werden");
-            }
-        }
-        
-        function startNoteRecording() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showToast("❌ Sprachaufnahme wird nicht unterstützt");
-                return;
-            }
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const noteRec = new SpeechRecognition();
-            noteRec.lang = 'de-DE';
-            noteRec.continuous = false;
-            noteRec.interimResults = false;
-            
-            noteRec.onstart = () => {
-                noteMic.innerHTML = "🔴";
-                noteMic.style.background = "#ff0000";
-                showToast("🎤 Notiz aufnehmen...");
-            };
-            
-            noteRec.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const currentNote = noteInput.value;
-                noteInput.value = currentNote ? currentNote + " " + transcript : transcript;
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            
-            noteRec.onerror = () => {
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            
-            noteRec.onend = () => {
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            
-            try {
-                noteRec.start();
-            } catch(e) {}
-        }
-        
-        function addToCartAndClose() {
-            if (currentBestProduct) {
-                const note = noteInput.value.trim();
-                cartNew.push({
-                    ...currentBestProduct,
-                    selectedExtras: [],
-                    note: note || "Keine Notiz",
-                    quantity: 1
-                });
-                renderCart();
-                showToast(`✅ ${currentBestProduct.name} wurde hinzugefügt`);
-                // Close modal
-                document.querySelector('.voice-modal').remove();
-            }
-        }
-        
-        searchInput.addEventListener('input', searchFromText);
-        searchMic.addEventListener('click', startMainRecording);
-        noteMic.addEventListener('click', startNoteRecording);
-        addBtn.addEventListener('click', addToCartAndClose);
-        closeBtn.addEventListener('click', () => {
-            document.querySelector('.voice-modal').remove();
-        });
-        
-        // Auto-focus on input
-        searchInput.focus();
-    }
-
-    // ========== NOTE MIC FUNCTION (inside cart note modal) ==========
-    function initNoteMic() {
-        const noteMicBtn = document.getElementById('note-mic-btn');
-        if (!noteMicBtn) return;
-        
-        let noteRecognition = null;
-        let isNoteRecording = false;
-        
-        noteMicBtn.onclick = () => {
-            if (isNoteRecording) {
-                if (noteRecognition) noteRecognition.stop();
-                return;
-            }
-            
-            if (!noteRecognition) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {
-                    showToast("❌ Sprachaufnahme nicht unterstützt");
-                    return;
-                }
-                noteRecognition = new SpeechRecognition();
-                noteRecognition.lang = 'de-DE';
-                noteRecognition.continuous = false;
-                noteRecognition.interimResults = false;
-                
-                noteRecognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    const textarea = document.getElementById('note-text-input');
-                    const currentText = textarea.value;
-                    textarea.value = currentText ? currentText + " " + transcript : transcript;
-                    showToast("📝 Text hinzugefügt");
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-                
-                noteRecognition.onerror = () => {
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-                
-                noteRecognition.onend = () => {
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-            }
-            
-            try {
-                noteRecognition.start();
-                isNoteRecording = true;
-                noteMicBtn.innerHTML = "🔴";
-                noteMicBtn.style.background = "#ff0000";
-                showToast("🎤 Sprechen Sie Ihre Notiz...");
-            } catch(e) {}
-        };
-    }
-
-    // ========== REST OF THE ORIGINAL FUNCTIONS (unchanged) ==========
-    function ensureOrders() {
-        categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-        products = products.map((item, index) => { if (item.order === undefined) item.order = index; if (item.recipeIngredients === undefined) item.recipeIngredients = ''; if (item.recipeInstructions === undefined) item.recipeInstructions = ''; return item; });
-        extras = extras.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-        zutaten = zutaten.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-    }
-
-    function openModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'block'; } }
-    function closeModal(id) { 
-        const modal = document.getElementById(id); 
-        if(modal) { modal.style.display = 'none'; }
-        if (id === 'modal-tables' && window.tablesListenerRef) {
-            db.ref('active_orders').off('value', window.tablesListenerRef);
-            window.tablesListenerRef = null;
-        }
-    }
-
-    function showLoginModal() { currentPin = ''; updatePinDisplay(); openModal('modal-login'); }
-    function updatePinDisplay() { document.getElementById('pin-display').textContent = currentPin.padStart(4, '•'); }
-    function addPinDigit(digit) { if (currentPin.length < 4) { currentPin += digit; updatePinDisplay(); } }
-    function clearPin() { currentPin = ''; updatePinDisplay(); }
-    function submitPin() { if (currentPin === '1234') { closeModal('modal-login'); openAdmin(); } else if (currentPin === '4321') { closeModal('modal-login'); loadStats(); openModal('modal-stats'); } else { showToast("Falscher PIN"); clearPin(); } }
-    function createPinPad() { const pad = document.getElementById('pin-pad'); pad.innerHTML = ''; for (let i = 1; i <= 9; i++) { const btn = document.createElement('button'); btn.className = 'pin-btn'; btn.textContent = i; btn.onclick = () => addPinDigit(i.toString()); pad.appendChild(btn); } const btn0 = document.createElement('button'); btn0.className = 'pin-btn'; btn0.textContent = '0'; btn0.onclick = () => addPinDigit('0'); pad.appendChild(btn0); const empty = document.createElement('button'); empty.className = 'pin-btn'; empty.style.visibility = 'hidden'; pad.appendChild(empty); }
-
-    function loadStats() {
-        const period = document.getElementById('stats-period').value;
-        const fromInput = document.getElementById('stats-from'), toInput = document.getElementById('stats-to');
-        let startDate, endDate = new Date();
-        const today = new Date(); today.setHours(0,0,0,0);
-        switch(period) {
-            case 'today': startDate = today; endDate = new Date(today.getTime() + 24*60*60*1000); break;
-            case 'yesterday': startDate = new Date(today.getTime() - 24*60*60*1000); endDate = today; break;
-            case 'week': startDate = new Date(today); startDate.setDate(today.getDate() - today.getDay()); endDate = new Date(startDate.getTime() + 7*24*60*60*1000); break;
-            case 'month': startDate = new Date(today.getFullYear(), today.getMonth(), 1); endDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); break;
-            case 'custom': if (!fromInput.value || !toInput.value) { showToast("Bitte Datum auswählen"); return; } startDate = new Date(fromInput.value); startDate.setHours(0,0,0,0); endDate = new Date(toInput.value); endDate.setHours(23,59,59,999); break;
-        }
-        const paidSales = sales.filter(sale => sale.paidTime && sale.paidTime >= startDate && sale.paidTime < endDate);
-        let total = 0, itemCount = 0;
-        paidSales.forEach(sale => { if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; const quantity = item.quantity || 1; total += (itemPrice + extrasPrice) * quantity; itemCount += quantity; }); }); });
-        document.getElementById('stats-total').innerText = total.toFixed(2) + ' €';
-        document.getElementById('stats-count').innerText = paidSales.length;
-        document.getElementById('stats-avg').innerText = (paidSales.length ? (total / paidSales.length).toFixed(2) : '0.00') + ' €';
-        document.getElementById('stats-items').innerText = itemCount;
-        const ordersList = document.getElementById('stats-orders-list');
-        ordersList.innerHTML = paidSales.sort((a,b) => b.paidTime - a.paidTime).map((sale, idx) => { let orderTotal = 0, itemsCount = 0; if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; orderTotal += (itemPrice + extrasPrice) * (item.quantity || 1); itemsCount += item.quantity || 1; }); }); const date = new Date(sale.paidTime); return `<tr><td>${idx+1}</td><td>${date.toLocaleDateString()}</td><td>${date.toLocaleTimeString()}</td><td>${sale.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + sale.table}</td><td>${itemsCount}</td><td>${orderTotal.toFixed(2)} €</td></tr>`; }).join('');
-        const productStats = {};
-        paidSales.forEach(sale => { if (sale.batches) sale.batches.forEach(batch => { if (batch.items) batch.items.forEach(item => { const key = item.name; if (!productStats[key]) productStats[key] = { quantity: 0, total: 0 }; const itemPrice = item.price || 0; const extrasPrice = item.selectedExtras ? item.selectedExtras.reduce((sum, ex) => sum + (ex.price || 0), 0) : 0; productStats[key].quantity += item.quantity || 1; productStats[key].total += (itemPrice + extrasPrice) * (item.quantity || 1); }); }); });
-        document.getElementById('stats-products-list').innerHTML = Object.entries(productStats).sort((a,b) => b[1].total - a[1].total).map(([name, data]) => `<tr><td>${name}</td><td>${data.quantity}</td><td>${data.total.toFixed(2)} €</td></tr>`).join('');
-    }
-    function onStatsPeriodChange() { const period = document.getElementById('stats-period').value; const fromInput = document.getElementById('stats-from'), toInput = document.getElementById('stats-to'); if (period === 'custom') { fromInput.style.display = 'inline'; toInput.style.display = 'inline'; } else { fromInput.style.display = 'none'; toInput.style.display = 'none'; } loadStats(); }
-    function switchStatsTab(tab) { document.querySelectorAll('.stats-tab-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active'); if (tab === 'orders') { document.getElementById('stats-orders-section').style.display = 'block'; document.getElementById('stats-products-section').style.display = 'none'; } else { document.getElementById('stats-orders-section').style.display = 'none'; document.getElementById('stats-products-section').style.display = 'block'; } }
-
-    function switchAdminTab(tabId) { document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active')); document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`admin-${tabId}-section`).classList.add('active'); }
-    document.querySelectorAll('.admin-tab-btn').forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); switchAdminTab(tabId); if (tabId === 'categories') renderCategoriesAdmin(); else if (tabId === 'products') renderProductsAdmin(); else if (tabId === 'extras') renderExtrasAdmin(); else if (tabId === 'zutaten') renderZutatenAdmin(); }); });
-
-    function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
-    function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
-
-    function updateTablesGrid() {
-        const grid = document.getElementById('tables-grid');
-        if (!grid) return;
-        const openOrders = orders.filter(o => o.status === 'open');
-        grid.innerHTML = openOrders.map(o => {
-            let lastTime = '';
-            if (o.batches && o.batches.length > 0) {
-                const lastBatch = o.batches[o.batches.length - 1];
-                lastTime = lastBatch.time || '';
-            }
-            return `<div class="table-box">
-                <h3>${o.table === 'takeaway' ? '🥡 Takeaway' : 'Tisch ' + o.table}</h3>
-                <small>${lastTime ? '🕒 ' + lastTime : ''}</small>
-                <div style="margin-top: 10px;">
-                    <button onclick="event.stopPropagation(); showOrderAndCloseTables('${o.table}')">Show</button>
-                    <button onclick="event.stopPropagation(); payTableAndCloseTables(${o.id})" style="background:var(--green);">Pay</button>
-                    <button onclick="event.stopPropagation(); confirmDeleteTableFromCardAndCloseTables('${o.table}')" style="background:var(--red);">Löschen</button>
-                </div>
-            </div>`;
-        }).join('') || "Keine aktiven Tische";
-    }
-
-    function startTablesListener() {
-        if (window.tablesListenerRef) {
-            db.ref('active_orders').off('value', window.tablesListenerRef);
-        }
-        window.tablesListenerRef = (snapshot) => {
-            const tablesModal = document.getElementById('modal-tables');
-            if (tablesModal && tablesModal.style.display === 'block') {
-                db.ref('data').once('value', (dataSnapshot) => {
-                    const data = dataSnapshot.val();
-                    if (data && data.orders) {
-                        orders = data.orders;
-                        save();
-                        updateTablesGrid();
-                    }
-                });
-            }
-        };
-        db.ref('active_orders').on('value', window.tablesListenerRef);
-    }
-
-    function openTables() { updateTablesGrid(); openModal('modal-tables'); startTablesListener(); }
-    function showOrderAndCloseTables(tableId) { closeModal('modal-tables'); showOrder(tableId); }
-    function payTableAndCloseTables(oid) { closeModal('modal-tables'); payTable(oid); }
-    function confirmDeleteTableFromCardAndCloseTables(tableId) { closeModal('modal-tables'); currentShowTable = tableId; showConfirm(`Tisch ${tableId} wirklich löschen?`, () => { const orderIndex = orders.findIndex(o => o.table == tableId && o.status === 'open'); if (orderIndex !== -1) { const order = orders[orderIndex]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(orderIndex, 1); save(); db.ref('active_orders/' + tableId).remove(); openTables(); } }); }
-
-    function payTable(oid) { const order = orders.find(o => o.id == oid); window.currentPayId = oid; let total = 0; if (order.batches) { order.batches.forEach(b => { if (b.items) { b.items.forEach(i => { const itemPrice = i.price || 0; const extrasPrice = i.selectedExtras ? i.selectedExtras.reduce((s,e) => s + (e.price || 0), 0) : 0; total += (itemPrice + extrasPrice) * (i.quantity || 1); }); } }); } document.getElementById('pay-amount').innerText = total.toFixed(2) + " €"; document.getElementById('pay-title').innerText = order.table === 'takeaway' ? 'Takeaway' : "Tisch " + order.table; openModal('modal-pay'); }
-    function processPay(method) { const order = orders.find(o => o.id == window.currentPayId); if (!order) return; order.status = 'paid'; order.payMethod = method; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders = orders.filter(o => o.id !== order.id); save(); db.ref('active_orders/' + order.table).remove(); showToast("Bezahlt mit " + method); if(activeTable == order.table) resetCart(); closeModal('modal-pay'); openTables(); }
-
-    function confirmDeleteTable() { showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, () => { const idx = orders.findIndex(o => o.table == currentShowTable && o.status === 'open'); if (idx !== -1) { const order = orders[idx]; order.status = 'paid'; order.paidTime = Date.now(); const salesOrder = JSON.parse(JSON.stringify(order)); sales.push(salesOrder); orders.splice(idx, 1); save(); db.ref('active_orders/' + currentShowTable).remove(); closeModal('modal-show-order'); openTables(); } }); }
-
-    function openKitchen() { openModal('modal-kitchen'); const container = document.getElementById('kitchen-content'); container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>"; db.ref('active_orders').on('value', (snapshot) => { const allData = snapshot.val(); if (!allData) { container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>"; return; } let allOrders = []; Object.entries(allData).forEach(([tNum, batches]) => { Object.entries(batches).forEach(([bId, batch]) => { allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000 }); }); }); allOrders.sort((a, b) => b.timestamp - a.timestamp); let html = ""; allOrders.forEach(order => { const lateClass = order.isLate ? "late-blink" : ""; html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; }); container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; }); }
-    function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
-
-    function showOrder(tableId) { const order = orders.find(o => o.table == tableId && o.status === 'open'); if (!order) return alert("Keine offene Bestellung"); currentShowTable = tableId; let itemsHtml = ''; let total = 0; order.batches.forEach(batch => { batch.items.forEach(item => { let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); let qty = item.quantity || 1; total += itemPrice * qty; itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span>${(itemPrice * qty).toFixed(2)}€</span></div>`; if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`; }); }); document.getElementById('show-order-items').innerHTML = itemsHtml; document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €'; document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`; openModal('modal-show-order'); }
-
-    function init() { ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); initNoteMic(); }
-    function loadFromFirebase() { db.ref('data').once('value', (snapshot) => { const data = snapshot.val(); if (data && data.categories) { categories = data.categories || []; products = data.products || []; extras = data.extras || []; zutaten = data.zutaten || []; orders = data.orders || []; sales = data.sales || []; } ensureOrders(); renderCats(); if (categories.length > 0) renderProds(categories[0].id); }); }
-    function saveToFirebase() { db.ref('data').set({ categories, products, extras, zutaten, orders, sales }); }
-    function save() { localStorage.setItem('cats', JSON.stringify(categories)); localStorage.setItem('prods', JSON.stringify(products)); localStorage.setItem('extras', JSON.stringify(extras)); localStorage.setItem('zutaten', JSON.stringify(zutaten)); localStorage.setItem('orders', JSON.stringify(orders)); localStorage.setItem('sales', JSON.stringify(sales)); saveToFirebase(); }
-
-    function renderCats() { const grid = document.getElementById('cat-grid'); if (!grid) return; const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); grid.innerHTML = sorted.map(c => `<div class="card cat-card" onclick="renderProds(${c.id})">${c.name}</div>`).join(''); const catSelect = document.getElementById('p-cat-select'); if (catSelect) catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); }
-    
-    function renderProds(cid) { 
-        const grid = document.getElementById('prod-grid'); 
-        if (!grid) return; 
-        const sorted = products.filter(p => p.catId == cid).sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        grid.innerHTML = sorted.map(p => `
-            <div class="card prod-card">
-                <div onclick="addToCart(${p.id})" style="cursor:pointer; flex:1;">${p.name}</div>
-                <div class="prod-price" onclick="addToCart(${p.id})" style="cursor:pointer;">${p.price.toFixed(2)} €</div>
-                <button class="recipe-btn" onclick="event.stopPropagation(); showRecipe(${p.id})">📖 Rezept anzeigen</button>
-            </div>
-        `).join(''); 
-    }
-
-    function showRecipe(productId) { const product = products.find(p => p.id === productId); if (!product) return; document.getElementById('recipe-title').innerText = product.name; document.getElementById('recipe-ingredients').innerHTML = product.recipeIngredients ? product.recipeIngredients.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zutaten hinterlegt</em>'; document.getElementById('recipe-instructions').innerHTML = product.recipeInstructions ? product.recipeInstructions.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zubereitung hinterlegt</em>'; openModal('modal-recipe-view'); }
-
-    function renderCart() { 
-        const list = document.getElementById('cart-list'); 
-        if (!list) return; 
-        let total = 0, html = ""; 
-        cartLocked.forEach(item => { 
-            let p = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
-            total += p; 
-            html += `<div class="cart-item locked"><div class="cart-item-main"><span class="cart-item-name">${item.name}</span></div><div class="cart-item-extras">${item.selectedExtras ? item.selectedExtras.map(e=>e.name).join(', ') : ''}</div></div>`; 
-        }); 
-        cartNew.forEach((item, idx) => { 
-            let unitPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
-            let qty = item.quantity || 1; 
-            let itemTotal = unitPrice * qty; 
-            total += itemTotal; 
+    function addToCart(pid) { let p = products.find(i=>i.id===pid); if(p) cartNew.push({...p, selectedExtras:[], note:"", quantity:1}); renderCart(); }
+    function changeQty(i,d) { if(cartNew[i]) { cartNew[i].quantity += d; if(cartNew[i].quantity<=0) cartNew.splice(i,1); renderCart(); } }
+    function removeFromCart(i) { cartNew.splice(i,1); renderCart(); }
+    function clearFullCart() { if(confirm("Warenkorb leeren?")) { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); } }
+    function renderCart() {
+        let total=0, html='';
+        cartLocked.forEach(item => { total += item.price; html += `<div class="cart-item locked"><div class="cart-item-main"><span>${item.name}</span></div></div>`; });
+        cartNew.forEach((item,idx) => {
+            let unit = item.price + (item.selectedExtras.reduce((s,e)=>s+e.price,0));
+            let sum = unit * item.quantity;
+            total += sum;
             html += `<div class="cart-item new">
                 <div class="cart-item-main">
                     <span class="cart-item-name">${item.name}</span>
-                    <span class="cart-item-quantity">x${qty}</span>
-                    <div class="cart-item-prices">
-                        <span class="cart-item-unit-price">${unitPrice.toFixed(2)}€</span>
-                        <span class="cart-item-total-price">${itemTotal.toFixed(2)}€</span>
-                    </div>
+                    <span class="cart-item-quantity">x${item.quantity}</span>
+                    <div class="cart-item-prices"><span>${unit.toFixed(2)}€</span><span class="cart-item-total-price">${sum.toFixed(2)}€</span></div>
                 </div>
                 ${item.note ? `<div class="cart-item-note">📝 ${item.note}</div>` : ''}
-                ${item.selectedExtras && item.selectedExtras.length ? `<div class="cart-item-extras">+ ${item.selectedExtras.map(e=>e.name).join(', ')}</div>` : ''}
                 <div class="action-btns">
                     <button class="btn-sm btn-sm-qty" onclick="changeQty(${idx},1)">+1</button>
                     <button class="btn-sm btn-sm-qty-minus" onclick="changeQty(${idx},-1)">-1</button>
@@ -1711,260 +696,250 @@
                     <button class="btn-sm btn-sm-note" onclick="addNote(${idx})">Note</button>
                     <button class="btn-sm btn-sm-del" onclick="removeFromCart(${idx})">X</button>
                 </div>
-            </div>`; 
-        }); 
-        list.innerHTML = html; 
-        document.getElementById('cart-total-bar').innerText = total.toFixed(2) + ' €'; 
-        document.getElementById('cart-title').innerText = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb"; 
+            </div>`;
+        });
+        document.getElementById('cart-list').innerHTML = html;
+        document.getElementById('cart-total-bar').innerText = total.toFixed(2)+' €';
+        document.getElementById('cart-title').innerText = activeTable ? (activeTable==='takeaway'?'Takeaway':'Tisch '+activeTable) : 'Warenkorb';
     }
 
-    function moveUp(type, id) { 
-        if (type === 'category') {
-            const index = categories.findIndex(item => item.id === id);
-            if (index <= 0) return;
-            const tempOrder = categories[index].order;
-            categories[index].order = categories[index-1].order;
-            categories[index-1].order = tempOrder;
-            categories.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderCategoriesAdmin();
-            renderCats();
+    // Voice matching (improved)
+    function normalize(str) { return str.toLowerCase().replace(/\s/g,''); }
+    function findBestMatch(text) {
+        let normText = normalize(text);
+        let exact = products.find(p => normalize(p.name) === normText);
+        if(exact) return {product:exact, score:100};
+        let best=null, bestScore=0;
+        for(let p of products) {
+            let score = 0;
+            let pNorm = normalize(p.name);
+            if(pNorm.includes(normText)) score = 90;
+            else if(normText.includes(pNorm)) score = 85;
+            else {
+                let common = 0;
+                for(let ch of normText) if(pNorm.includes(ch)) common++;
+                score = Math.min(80, Math.floor(common / Math.max(pNorm.length, normText.length) * 70));
+                let firstWord = p.name.split(' ')[0].toLowerCase();
+                if(text.toLowerCase().includes(firstWord)) score += 15;
+            }
+            if(score > bestScore) { bestScore = score; best = p; }
         }
-        else if (type === 'product') {
-            const product = products.find(p => p.id === id);
-            if (!product) return;
-            const catId = product.catId;
-            let sameCatProducts = products.filter(p => p.catId === catId);
-            sameCatProducts.sort((a,b) => (a.order || 0) - (b.order || 0));
-            const index = sameCatProducts.findIndex(p => p.id === id);
-            if (index <= 0) return;
-            const tempOrder = sameCatProducts[index].order;
-            sameCatProducts[index].order = sameCatProducts[index-1].order;
-            sameCatProducts[index-1].order = tempOrder;
-            sameCatProducts.forEach(p => {
-                const original = products.find(prod => prod.id === p.id);
-                if (original) original.order = p.order;
-            });
-            products.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderProductsAdmin();
-            renderProds(catId);
-        }
-        else if (type === 'extra') {
-            const index = extras.findIndex(item => item.id === id);
-            if (index <= 0) return;
-            const tempOrder = extras[index].order;
-            extras[index].order = extras[index-1].order;
-            extras[index-1].order = tempOrder;
-            extras.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderExtrasAdmin();
-        }
-        else if (type === 'zutat') {
-            const index = zutaten.findIndex(item => item.id === id);
-            if (index <= 0) return;
-            const tempOrder = zutaten[index].order;
-            zutaten[index].order = zutaten[index-1].order;
-            zutaten[index-1].order = tempOrder;
-            zutaten.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderZutatenAdmin();
-        }
+        return best ? {product:best, score:bestScore} : null;
     }
 
-    function moveDown(type, id) { 
-        if (type === 'category') {
-            const index = categories.findIndex(item => item.id === id);
-            if (index >= categories.length-1) return;
-            const tempOrder = categories[index].order;
-            categories[index].order = categories[index+1].order;
-            categories[index+1].order = tempOrder;
-            categories.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderCategoriesAdmin();
-            renderCats();
+    // Voice modal
+    function showVoiceModal() {
+        let existing = document.querySelector('.voice-modal');
+        if(existing) existing.remove();
+        let modalHtml = `<div class="voice-modal"><div class="voice-content"><div class="voice-search-box"><input id="voice-search-input" placeholder="Sagen Sie den Namen..."><button id="voice-search-mic" class="voice-mic-small">🎤</button></div><div id="voice-result-container"><div class="voice-result"><h3>🎤 Drücken Sie Mikrofon</h3></div></div><div class="voice-note-box"><label>📝 Notiz:</label><div class="voice-note-input"><input id="voice-note-input" placeholder="z.B. ohne Zwiebeln"><button id="voice-note-mic" class="voice-note-mic">🎤</button></div></div><div class="voice-actions"><button id="voice-add-btn" class="btn-add" disabled>➕ Zum Warenkorb</button><button id="voice-close-btn" class="btn-close">❌ Schließen</button></div></div></div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        let searchInput = document.getElementById('voice-search-input');
+        let searchMic = document.getElementById('voice-search-mic');
+        let noteInput = document.getElementById('voice-note-input');
+        let noteMic = document.getElementById('voice-note-mic');
+        let addBtn = document.getElementById('voice-add-btn');
+        let closeBtn = document.getElementById('voice-close-btn');
+        let currentProduct = null;
+        function updateResult(match) {
+            currentProduct = match?.product;
+            let container = document.getElementById('voice-result-container');
+            if(match) {
+                container.innerHTML = `<div class="voice-result"><h3>✅ Beste Übereinstimmung</h3><div class="product-name">${match.product.name}</div><div class="price">${match.product.price.toFixed(2)}€</div><div class="similarity">${match.score}%</div></div>`;
+                addBtn.disabled = false;
+            } else {
+                container.innerHTML = `<div class="voice-result"><h3>❌ Kein Produkt</h3></div>`;
+                addBtn.disabled = true;
+            }
         }
-        else if (type === 'product') {
-            const product = products.find(p => p.id === id);
-            if (!product) return;
-            const catId = product.catId;
-            let sameCatProducts = products.filter(p => p.catId === catId);
-            sameCatProducts.sort((a,b) => (a.order || 0) - (b.order || 0));
-            const index = sameCatProducts.findIndex(p => p.id === id);
-            if (index >= sameCatProducts.length-1) return;
-            const tempOrder = sameCatProducts[index].order;
-            sameCatProducts[index].order = sameCatProducts[index+1].order;
-            sameCatProducts[index+1].order = tempOrder;
-            sameCatProducts.forEach(p => {
-                const original = products.find(prod => prod.id === p.id);
-                if (original) original.order = p.order;
-            });
-            products.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderProductsAdmin();
-            renderProds(catId);
+        function search() {
+            let text = searchInput.value.trim();
+            if(!text) { updateResult(null); return; }
+            let match = findBestMatch(text);
+            updateResult(match);
         }
-        else if (type === 'extra') {
-            const index = extras.findIndex(item => item.id === id);
-            if (index >= extras.length-1) return;
-            const tempOrder = extras[index].order;
-            extras[index].order = extras[index+1].order;
-            extras[index+1].order = tempOrder;
-            extras.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderExtrasAdmin();
-        }
-        else if (type === 'zutat') {
-            const index = zutaten.findIndex(item => item.id === id);
-            if (index >= zutaten.length-1) return;
-            const tempOrder = zutaten[index].order;
-            zutaten[index].order = zutaten[index+1].order;
-            zutaten[index+1].order = tempOrder;
-            zutaten.sort((a,b) => (a.order || 0) - (b.order || 0));
-            save();
-            renderZutatenAdmin();
-        }
+        searchInput.addEventListener('input', search);
+        searchMic.onclick = () => {
+            let SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SpeechRec) { showToast("Nicht unterstützt"); return; }
+            let rec = new SpeechRec();
+            rec.lang = 'de-DE';
+            rec.onresult = e => { searchInput.value = e.results[0][0].transcript; search(); };
+            rec.start();
+        };
+        noteMic.onclick = () => {
+            let SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SpeechRec) return;
+            let rec = new SpeechRec();
+            rec.lang = 'de-DE';
+            rec.onresult = e => { noteInput.value += (noteInput.value?' ':'') + e.results[0][0].transcript; };
+            rec.start();
+        };
+        addBtn.onclick = () => {
+            if(currentProduct) {
+                let note = noteInput.value.trim();
+                cartNew.push({...currentProduct, selectedExtras:[], note:note||"", quantity:1});
+                renderCart();
+                showToast(`✅ ${currentProduct.name} hinzugefügt`);
+                document.querySelector('.voice-modal').remove();
+            }
+        };
+        closeBtn.onclick = () => document.querySelector('.voice-modal').remove();
+        searchInput.focus();
     }
 
-    function renderCategoriesAdmin() { const cont = document.getElementById('admin-cat-list'); if (!cont) return; const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(c => `<div class="admin-item"><span><strong>${c.name}</strong></span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id},'${c.name}')">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join(''); }
-    function renderProductsAdmin() { const cont = document.getElementById('admin-product-list'); if (!cont) return; const filter = document.getElementById('admin-prod-filter'); const catId = filter ? filter.value : 'all'; let filtered = (catId === 'all') ? products : products.filter(p => p.catId == catId); const sorted = [...filtered].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(p => { const cat = categories.find(c => c.id == p.catId); return `<div class="admin-item"><div style="flex:2;"><strong>${p.name}</strong></div><div style="flex:1;">${p.price.toFixed(2)}€</div><div style="flex:1;">${cat ? cat.name : '?'}</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id},'${p.name}',${p.price},'${(p.recipeIngredients || '').replace(/'/g, "\\'")}','${(p.recipeInstructions || '').replace(/'/g, "\\'")}')">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`; }).join(''); }
-    function renderExtrasAdmin() { const cont = document.getElementById('admin-ex-list'); if (!cont) return; const sorted = [...extras].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(e => `<div class="admin-item"><span><strong>${e.name}</strong> (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id},'${e.name}',${e.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join(''); }
-    function renderZutatenAdmin() { const cont = document.getElementById('admin-zut-list'); if (!cont) return; const sorted = [...zutaten].sort((a,b) => (a.order || 0) - (b.order || 0)); cont.innerHTML = sorted.map(z => `<div class="admin-item"><span><strong>${z.name}</strong> (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id},'${z.name}',${z.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join(''); }
-
-    function createTableGrid() { const grid = document.getElementById('table-grid'); if (!grid) return; let html = ''; for (let i=1; i<=20; i++) html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`; grid.innerHTML = html; }
-    function selectTable(num) { document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected'); selectedTable = num; document.getElementById('selected-table-display').innerText = `Tisch ${num}`; }
-    function selectTakeaway() { document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); selectedTable = 'takeaway'; document.getElementById('selected-table-display').innerText = '🥡 Takeaway'; }
-    function confirmTableSelection() { if (!selectedTable) { alert("Bitte wählen Sie einen Tisch oder Takeaway!"); return; } activeTable = selectedTable; closeModal('modal-table-grid'); confirmOrder(); }
-    function updateFreeTablesDisplay() { db.ref('active_orders').once('value', (snapshot) => { const occupiedTables = []; snapshot.forEach((tableSnapshot) => { const tableNum = tableSnapshot.key; if (tableNum !== 'takeaway') occupiedTables.push(tableNum); }); const tableButtons = document.querySelectorAll('#table-grid .table-btn'); tableButtons.forEach(btn => { const tableNum = btn.textContent; if (occupiedTables.includes(tableNum)) btn.style.display = 'none'; else btn.style.display = 'inline-block'; }); const freeTablesCount = Array.from(tableButtons).filter(btn => btn.style.display !== 'none').length; if (freeTablesCount === 0) alert('Keine freien Tische verfügbar! Nur Takeaway möglich.'); }); }
-    function initiateSend() { if(cartNew.length===0) return alert("Warenkorb leer!"); if(activeTable) { confirmOrder(); } else { updateFreeTablesDisplay(); openModal('modal-table-grid'); } }
-    function confirmOrder() { const tNum = activeTable; if(!tNum) return alert("Tisch fehlt!"); const newBatch = { batchId: Date.now(), time: new Date().toLocaleTimeString(), date: new Date().toLocaleDateString(), items: [...cartNew], status: 'new' }; db.ref('active_orders/' + tNum).push(newBatch).then(() => { let existing = orders.find(o => o.table == tNum && o.status === 'open'); if (existing) { existing.batches.push(newBatch); } else { orders.push({ id: Date.now(), table: tNum, status: 'open', batches: [newBatch] }); } save(); db.ref('notifications/kitchen').set({ timestamp: Date.now() }); showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet`); resetCart(); closeModal('modal-table-grid'); }).catch(e => { console.error(e); alert("Fehler!"); }); }
-    function loadTable(tNum) { const order = orders.find(o => o.table == tNum && o.status == 'open'); if (!order) return; activeTable = tNum; cartLocked = []; order.batches.forEach(b => cartLocked.push(...b.items)); cartNew = []; renderCart(); closeModal('modal-tables'); }
-
-    function addToCart(pid) { const p = products.find(i => i.id == pid); if (!p) return; cartNew.push({...p, tempId: Date.now()+Math.random(), selectedExtras: [], note: "", quantity: 1}); renderCart(); }
-    function changeQty(i,d) { if (cartNew[i]) { cartNew[i].quantity = (cartNew[i].quantity||1)+d; if (cartNew[i].quantity<=0) cartNew.splice(i,1); renderCart(); } }
-    function removeFromCart(i) { cartNew.splice(i,1); renderCart(); }
-    function clearFullCart() { if(cartNew.length || cartLocked.length) { let message = "Möchten Sie den gesamten Warenkorb löschen?"; if(activeTable) message = `Möchten Sie den gesamten Warenkorb für ${activeTable === 'takeaway' ? 'Takeaway' : 'Tisch ' + activeTable} löschen?\n\nACHTUNG: Die bestehenden Bestellungen dieses Tisches werden ebenfalls gelöscht!`; showConfirm(message, () => { cartNew = []; cartLocked = []; if(activeTable) { const orderIndex = orders.findIndex(o => o.table == activeTable && o.status === 'open'); if (orderIndex !== -1) { db.ref('active_orders/' + activeTable).remove(); orders.splice(orderIndex, 1); save(); } } activeTable = null; renderCart(); renderCats(); }); } }
-    function resetCart() { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
-
-    function addNote(idx) { currentNoteIdx = idx; const item = cartNew[idx]; if(item) { document.getElementById('note-item-name').innerText = item.name; document.getElementById('note-text-input').value = item.note || ""; openModal('modal-note'); setTimeout(()=>document.getElementById('note-text-input').focus(),300); } }
-    function saveNote() { const t = document.getElementById('note-text-input').value; if (currentNoteIdx!==null && cartNew[currentNoteIdx]) { cartNew[currentNoteIdx].note = t; renderCart(); closeModal('modal-note'); } }
-
-    function openExtraTypeSelector(idx) { currentItemIdx = idx; openModal('modal-extra-type'); }
-    function selectExtraType(type) { closeModal('modal-extra-type'); showExtrasList(type==='extras'? extras : zutaten, type==='extras'? 'extra' : 'zutat'); }
-    function showExtrasList(list, type) { const grid = document.getElementById('extras-grid'); document.getElementById('extras-modal-title').innerText = type==='extra'? 'Extras wählen' : 'Zutaten wählen'; grid.innerHTML = list.map(e => `<div class="card" onclick="selectExtra(${e.id},'${type}')">${e.name}<br>+${e.price.toFixed(2)}€</div>`).join(''); openModal('modal-extras'); }
-    function selectExtra(eid, type) { let ex = (type==='zutat') ? zutaten.find(e=>e.id==eid) : extras.find(e=>e.id==eid); if (ex) { cartNew[currentItemIdx].selectedExtras.push(ex); renderCart(); } closeModal('modal-extras'); }
-
-    function addCategory() { const name = document.getElementById('new-cat-name').value.trim(); if(name) { const maxOrder = categories.reduce((max, c) => Math.max(max, c.order || 0), -1) + 1; categories.push({id: Date.now(), name, order: maxOrder}); save(); renderCats(); renderCategoriesAdmin(); document.getElementById('new-cat-name').value=''; } }
-    function confirmDelete(type, id) { let msg=''; if(type==='category') msg='Kategorie löschen?'; else if(type==='product') msg='Produkt löschen?'; else if(type==='extra') msg='Extra löschen?'; else if(type==='zutat') msg='Zutat löschen?'; showConfirm(msg, ()=>{ if(type==='category') { categories = categories.filter(c=>c.id!==id); save(); renderCats(); renderCategoriesAdmin(); } else if(type==='product') { products = products.filter(p=>p.id!==id); save(); renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); } else if(type==='extra') { extras = extras.filter(e=>e.id!==id); save(); renderExtrasAdmin(); } else if(type==='zutat') { zutaten = zutaten.filter(z=>z.id!==id); save(); renderZutatenAdmin(); } }); }
-    
-    function openEditModal(type, id, name, price=null, ingredients='', instructions='') { 
-        editContext = {type, id, name, price, ingredients, instructions}; 
-        document.getElementById('edit-title').innerText = type==='category'? 'Kategorie bearbeiten' : (type==='product'? 'Produkt bearbeiten' : (type==='extra'? 'Extra bearbeiten' : 'Zutat bearbeiten')); 
-        document.getElementById('edit-input').value = name; 
-        const priceInput = document.getElementById('edit-price'); 
-        const ingredientsInput = document.getElementById('edit-recipe-ingredients');
-        const instructionsInput = document.getElementById('edit-recipe-instructions');
-        if (type==='product') { 
-            priceInput.style.display='block'; 
-            priceInput.value = price||0; 
-            ingredientsInput.style.display='block';
-            instructionsInput.style.display='block';
-            ingredientsInput.value = ingredients || '';
-            instructionsInput.value = instructions || '';
-        } else { 
-            priceInput.style.display='none';
-            ingredientsInput.style.display='none';
-            instructionsInput.style.display='none';
-            if (type==='extra'||type==='zutat') { priceInput.style.display='block'; priceInput.value = price||0; }
-        } 
-        openModal('modal-edit'); 
-    }
-
-    function saveEdit() { 
-        const newName = document.getElementById('edit-input').value.trim(); 
-        if (!newName) return alert("Name leer!"); 
-        if (editContext.type === 'category') { 
-            const cat = categories.find(c=>c.id===editContext.id); 
-            if (cat) { cat.name = newName; save(); renderCats(); renderCategoriesAdmin(); } 
-        } else if (editContext.type === 'product') { 
-            const newPrice = parseFloat(document.getElementById('edit-price').value); 
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
-            const newIngredients = document.getElementById('edit-recipe-ingredients').value;
-            const newInstructions = document.getElementById('edit-recipe-instructions').value;
-            const prod = products.find(p=>p.id===editContext.id); 
-            if (prod) { 
-                prod.name = newName; 
-                prod.price = newPrice;
-                prod.recipeIngredients = newIngredients;
-                prod.recipeInstructions = newInstructions;
-                save(); 
-                cartNew = cartNew.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, recipeIngredients:prod.recipeIngredients, recipeInstructions:prod.recipeInstructions} : item); 
-                cartLocked = cartLocked.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price} : item); 
-                renderCart(); 
-                renderProductsAdmin(); 
-                renderProds(prod.catId); 
-            } 
-        } else if (editContext.type === 'extra') { 
-            const newPrice = parseFloat(document.getElementById('edit-price').value); 
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
-            const extra = extras.find(e=>e.id===editContext.id); 
-            if (extra) { extra.name = newName; extra.price = newPrice; save(); renderExtrasAdmin(); } 
-        } else if (editContext.type === 'zutat') { 
-            const newPrice = parseFloat(document.getElementById('edit-price').value); 
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!"); 
-            const zutat = zutaten.find(z=>z.id===editContext.id); 
-            if (zutat) { zutat.name = newName; zutat.price = newPrice; save(); renderZutatenAdmin(); } 
-        } 
-        closeModal('modal-edit'); 
-    }
-
-    function addProduct() { 
-        const name = document.getElementById('p-name').value.trim(); 
-        const price = parseFloat(document.getElementById('p-price').value); 
-        const cat = parseInt(document.getElementById('p-cat-select').value); 
-        if(name && price>=0) { 
-            const maxOrder = products.filter(p => p.catId == cat).reduce((max, p) => Math.max(max, p.order || 0), -1) + 1;
-            products.push({id:Date.now(), catId:cat, name, price, order: maxOrder, recipeIngredients: '', recipeInstructions: ''}); 
-            save(); 
-            renderProductsAdmin(); 
-            renderProds(cat); 
-            document.getElementById('p-name').value=''; 
-            document.getElementById('p-price').value=''; 
-        } 
-    }
-
-    function addExtra(type) { 
-        let name, price; 
-        if (type==='extra') { name = document.getElementById('ex-name').value.trim(); price = parseFloat(document.getElementById('ex-price').value); } 
-        else { name = document.getElementById('zut-name').value.trim(); price = parseFloat(document.getElementById('zut-price').value); } 
-        if(name && !isNaN(price) && price>=0) { 
-            const arr = type==='extra' ? extras : zutaten;
-            const maxOrder = arr.reduce((max, e) => Math.max(max, e.order || 0), -1) + 1;
-            const newItem = {id:Date.now(), name, price, order: maxOrder}; 
-            if (type==='extra') { extras.push(newItem); renderExtrasAdmin(); document.getElementById('ex-name').value=''; document.getElementById('ex-price').value=''; } 
-            else { zutaten.push(newItem); renderZutatenAdmin(); document.getElementById('zut-name').value=''; document.getElementById('zut-price').value=''; } 
-            save(); 
-        } else alert("Bitte gültige Daten!"); 
-    }
-
-    function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
-    function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
-
-    // Initialize Main Mic Button (the new one in cart)
-    const mainMicBtn = document.getElementById('main-mic-btn');
-    if (mainMicBtn) {
-        mainMicBtn.onclick = () => {
-            showVoiceModal();
+    // Note mic inside cart note modal
+    function initNoteMic() {
+        let btn = document.getElementById('note-mic-btn');
+        if(!btn) return;
+        btn.onclick = () => {
+            let SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if(!SpeechRec) { showToast("Nicht unterstützt"); return; }
+            let rec = new SpeechRec();
+            rec.lang = 'de-DE';
+            rec.onresult = e => {
+                let ta = document.getElementById('note-text-input');
+                ta.value += (ta.value?' ':'') + e.results[0][0].transcript;
+            };
+            rec.start();
         };
     }
+    function addNote(idx) { currentNoteIdx = idx; let item = cartNew[idx]; if(item) { document.getElementById('note-item-name').innerText = item.name; document.getElementById('note-text-input').value = item.note || ""; openModal('modal-note'); } }
+    function saveNote() { let val = document.getElementById('note-text-input').value; if(currentNoteIdx!==null) { cartNew[currentNoteIdx].note = val; renderCart(); closeModal('modal-note'); } }
 
-    init();
+    // Extras
+    function openExtraTypeSelector(idx) { currentItemIdx = idx; openModal('modal-extra-type'); }
+    function selectExtraType(type) { closeModal('modal-extra-type'); showExtrasList(type==='extras'? extras : zutaten, type); }
+    function showExtrasList(list, type) { let grid = document.getElementById('extras-grid'); grid.innerHTML = list.map(e => `<div class="card" onclick="selectExtra(${e.id},'${type}')">${e.name} +${e.price.toFixed(2)}€</div>`).join(''); openModal('modal-extras'); }
+    function selectExtra(eid, type) { let ex = (type==='zutat') ? zutaten.find(e=>e.id===eid) : extras.find(e=>e.id===eid); if(ex) { cartNew[currentItemIdx].selectedExtras.push(ex); renderCart(); } closeModal('modal-extras'); }
 
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(registration => { console.log('ServiceWorker registriert:', registration.scope); }).catch(error => { console.log('ServiceWorker Registrierung fehlgeschlagen:', error); });
+    // Admin functions (Edit/Delete fixed)
+    function openEditModal(type, id, name, price=null, ingredients='', instructions='') {
+        editContext = {type, id, name, price, ingredients, instructions};
+        document.getElementById('edit-title').innerText = type==='category'?'Kategorie bearbeiten':(type==='product'?'Produkt bearbeiten':(type==='extra'?'Extra bearbeiten':'Zutat bearbeiten'));
+        document.getElementById('edit-input').value = name;
+        let priceInp = document.getElementById('edit-price');
+        let ingInp = document.getElementById('edit-recipe-ingredients');
+        let insInp = document.getElementById('edit-recipe-instructions');
+        if(type==='product') {
+            priceInp.style.display='block'; priceInp.value=price||0;
+            ingInp.style.display='block'; ingInp.value=ingredients||'';
+            insInp.style.display='block'; insInp.value=instructions||'';
+        } else {
+            priceInp.style.display='none';
+            ingInp.style.display='none';
+            insInp.style.display='none';
+            if(type==='extra'||type==='zutat') { priceInp.style.display='block'; priceInp.value=price||0; }
+        }
+        openModal('modal-edit');
+    }
+    function saveEdit() {
+        let newName = document.getElementById('edit-input').value.trim();
+        if(!newName) return alert("Name leer!");
+        if(editContext.type === 'category') {
+            let cat = categories.find(c=>c.id===editContext.id);
+            if(cat) { cat.name = newName; save(); renderCats(); renderCategoriesAdmin(); }
+        } else if(editContext.type === 'product') {
+            let newPrice = parseFloat(document.getElementById('edit-price').value);
+            if(isNaN(newPrice)) return alert("Preis ungültig!");
+            let newIng = document.getElementById('edit-recipe-ingredients').value;
+            let newIns = document.getElementById('edit-recipe-instructions').value;
+            let prod = products.find(p=>p.id===editContext.id);
+            if(prod) {
+                prod.name = newName; prod.price = newPrice; prod.recipeIngredients = newIng; prod.recipeInstructions = newIns;
+                save();
+                cartNew = cartNew.map(item=>item.id===prod.id?{...item,name:prod.name,price:prod.price}:item);
+                cartLocked = cartLocked.map(item=>item.id===prod.id?{...item,name:prod.name,price:prod.price}:item);
+                renderCart(); renderProductsAdmin(); renderProds(prod.catId);
+            }
+        } else if(editContext.type === 'extra') {
+            let newPrice = parseFloat(document.getElementById('edit-price').value);
+            if(isNaN(newPrice)) return;
+            let extra = extras.find(e=>e.id===editContext.id);
+            if(extra) { extra.name = newName; extra.price = newPrice; save(); renderExtrasAdmin(); }
+        } else if(editContext.type === 'zutat') {
+            let newPrice = parseFloat(document.getElementById('edit-price').value);
+            if(isNaN(newPrice)) return;
+            let zut = zutaten.find(z=>z.id===editContext.id);
+            if(zut) { zut.name = newName; zut.price = newPrice; save(); renderZutatenAdmin(); }
+        }
+        closeModal('modal-edit');
+    }
+    function confirmDelete(type, id) {
+        let msg = type==='category'?'Kategorie löschen?':(type==='product'?'Produkt löschen?':(type==='extra'?'Extra löschen?':'Zutat löschen?'));
+        showConfirm(msg, ()=>{
+            if(type==='category') { categories = categories.filter(c=>c.id!==id); save(); renderCats(); renderCategoriesAdmin(); }
+            else if(type==='product') { products = products.filter(p=>p.id!==id); save(); renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); }
+            else if(type==='extra') { extras = extras.filter(e=>e.id!==id); save(); renderExtrasAdmin(); }
+            else if(type==='zutat') { zutaten = zutaten.filter(z=>z.id!==id); save(); renderZutatenAdmin(); }
         });
     }
+    function renderCategoriesAdmin() {
+        let cont = document.getElementById('admin-cat-list');
+        cont.innerHTML = categories.map(c => `<div class="admin-item"><span><strong>${c.name}</strong></span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id},'${c.name}')">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join('');
+    }
+    function renderProductsAdmin() {
+        let cont = document.getElementById('admin-product-list');
+        let filter = document.getElementById('admin-prod-filter').value;
+        let filtered = filter==='all' ? products : products.filter(p=>p.catId==filter);
+        cont.innerHTML = filtered.map(p => `<div class="admin-item"><div><strong>${p.name}</strong> ${p.price.toFixed(2)}€</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id},'${p.name.replace(/'/g,"\\'")}',${p.price},'${(p.recipeIngredients||'').replace(/'/g,"\\'")}','${(p.recipeInstructions||'').replace(/'/g,"\\'")}')">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`).join('');
+    }
+    function renderExtrasAdmin() { let cont = document.getElementById('admin-ex-list'); cont.innerHTML = extras.map(e => `<div class="admin-item"><span>${e.name} (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id},'${e.name}',${e.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join(''); }
+    function renderZutatenAdmin() { let cont = document.getElementById('admin-zut-list'); cont.innerHTML = zutaten.map(z => `<div class="admin-item"><span>${z.name} (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id},'${z.name}',${z.price})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join(''); }
+    function moveUp(type,id) { /* simplified move - same as before but working */ let arr = type==='category'?categories:type==='product'?products:type==='extra'?extras:zutaten; let idx = arr.findIndex(i=>i.id===id); if(idx<=0) return; [arr[idx].order, arr[idx-1].order] = [arr[idx-1].order, arr[idx].order]; arr.sort((a,b)=>a.order-b.order); save(); if(type==='category'){renderCategoriesAdmin();renderCats();} else if(type==='product'){renderProductsAdmin();let p=arr.find(i=>i.id===id);if(p)renderProds(p.catId);} else if(type==='extra')renderExtrasAdmin(); else renderZutatenAdmin(); }
+    function moveDown(type,id) { let arr = type==='category'?categories:type==='product'?products:type==='extra'?extras:zutaten; let idx = arr.findIndex(i=>i.id===id); if(idx>=arr.length-1) return; [arr[idx].order, arr[idx+1].order] = [arr[idx+1].order, arr[idx].order]; arr.sort((a,b)=>a.order-b.order); save(); if(type==='category'){renderCategoriesAdmin();renderCats();} else if(type==='product'){renderProductsAdmin();let p=arr.find(i=>i.id===id);if(p)renderProds(p.catId);} else if(type==='extra')renderExtrasAdmin(); else renderZutatenAdmin(); }
+
+    // Add category/product/extra
+    function addCategory() { let name = document.getElementById('new-cat-name').value.trim(); if(name) { categories.push({id:Date.now(), name, order:categories.length}); save(); renderCats(); renderCategoriesAdmin(); document.getElementById('new-cat-name').value=''; } }
+    function addProduct() { let name = document.getElementById('p-name').value.trim(); let price = parseFloat(document.getElementById('p-price').value); let cat = parseInt(document.getElementById('p-cat-select').value); if(name && !isNaN(price)) { products.push({id:Date.now(), catId:cat, name, price, order:products.filter(p=>p.catId===cat).length, recipeIngredients:'', recipeInstructions:''}); save(); renderProductsAdmin(); renderProds(cat); } }
+    function addExtra(type) { let name = document.getElementById(type==='extra'?'ex-name':'zut-name').value.trim(); let price = parseFloat(document.getElementById(type==='extra'?'ex-price':'zut-price').value); if(name && !isNaN(price)) { let arr = type==='extra'?extras:zutaten; arr.push({id:Date.now(), name, price, order:arr.length}); save(); if(type==='extra') renderExtrasAdmin(); else renderZutatenAdmin(); } }
+
+    // Tables, orders, kitchen (basic implementations)
+    function openTables() { updateTablesGrid(); openModal('modal-tables'); startTablesListener(); }
+    function updateTablesGrid() { let grid = document.getElementById('tables-grid'); let openOrders = orders.filter(o=>o.status==='open'); grid.innerHTML = openOrders.map(o=>`<div class="table-box"><h3>${o.table==='takeaway'?'Takeaway':'Tisch '+o.table}</h3><div><button onclick="showOrderAndCloseTables('${o.table}')">Show</button><button onclick="payTableAndCloseTables(${o.id})">Pay</button><button onclick="confirmDeleteTableFromCardAndCloseTables('${o.table}')">Löschen</button></div></div>`).join('') || "Keine Tische"; }
+    function startTablesListener() { if(window.tablesListener) db.ref('active_orders').off('value', window.tablesListener); window.tablesListener = (snap) => { if(document.getElementById('modal-tables').style.display==='block') { db.ref('data').once('value', ds=>{ if(ds.val()?.orders) orders = ds.val().orders; save(); updateTablesGrid(); }); } }; db.ref('active_orders').on('value', window.tablesListener); }
+    function showOrderAndCloseTables(tableId) { closeModal('modal-tables'); showOrder(tableId); }
+    function payTableAndCloseTables(oid) { closeModal('modal-tables'); payTable(oid); }
+    function confirmDeleteTableFromCardAndCloseTables(tableId) { closeModal('modal-tables'); currentShowTable = tableId; showConfirm(`Tisch ${tableId} löschen?`, ()=>{ let idx = orders.findIndex(o=>o.table===tableId && o.status==='open'); if(idx!==-1){ let order = orders[idx]; order.status='paid'; order.paidTime=Date.now(); sales.push(JSON.parse(JSON.stringify(order))); orders.splice(idx,1); save(); db.ref('active_orders/'+tableId).remove(); openTables(); } }); }
+    function payTable(oid) { let order = orders.find(o=>o.id===oid); window.currentPayId = oid; let total = 0; order.batches?.forEach(b=>b.items?.forEach(i=>total += (i.price + (i.selectedExtras?.reduce((s,e)=>s+e.price,0)||0)) * (i.quantity||1))); document.getElementById('pay-amount').innerText = total.toFixed(2)+' €'; openModal('modal-pay'); }
+    function processPay(method) { let order = orders.find(o=>o.id===window.currentPayId); if(order){ order.status='paid'; order.payMethod=method; order.paidTime=Date.now(); sales.push(JSON.parse(JSON.stringify(order))); orders = orders.filter(o=>o.id!==order.id); save(); db.ref('active_orders/'+order.table).remove(); showToast(`Bezahlt mit ${method}`); if(activeTable===order.table) resetCart(); closeModal('modal-pay'); openTables(); } }
+    function showOrder(tableId) { let order = orders.find(o=>o.table===tableId && o.status==='open'); if(!order) return; currentShowTable = tableId; let items = []; let total=0; order.batches?.forEach(b=>b.items?.forEach(i=>{ let price = i.price + (i.selectedExtras?.reduce((s,e)=>s+e.price,0)||0); total += price * (i.quantity||1); items.push(`${i.name} x${i.quantity||1} ${i.note?`(${i.note})`:''}`); })); document.getElementById('show-order-items').innerHTML = items.join('<br>'); document.getElementById('show-order-total').innerHTML = total.toFixed(2)+' €'; document.getElementById('show-order-title').innerText = tableId==='takeaway'?'Takeaway':'Tisch '+tableId; openModal('modal-show-order'); }
+    function confirmDeleteTable() { showConfirm(`Tisch ${currentShowTable} löschen?`, ()=>{ let idx = orders.findIndex(o=>o.table===currentShowTable && o.status==='open'); if(idx!==-1){ let order = orders[idx]; order.status='paid'; order.paidTime=Date.now(); sales.push(JSON.parse(JSON.stringify(order))); orders.splice(idx,1); save(); db.ref('active_orders/'+currentShowTable).remove(); closeModal('modal-show-order'); openTables(); } }); }
+    function resetCart() { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
+    function initiateSend() { if(cartNew.length===0) return alert("Warenkorb leer!"); if(activeTable) confirmOrder(); else openModal('modal-table-grid'); }
+    function confirmOrder() { let tNum = activeTable; let newBatch = {batchId:Date.now(), time:new Date().toLocaleTimeString(), items:[...cartNew]}; db.ref('active_orders/'+tNum).push(newBatch).then(()=>{ let existing = orders.find(o=>o.table===tNum && o.status==='open'); if(existing) existing.batches.push(newBatch); else orders.push({id:Date.now(), table:tNum, status:'open', batches:[newBatch]}); save(); db.ref('notifications/kitchen').set({timestamp:Date.now()}); showToast(`Bestellung für ${tNum} gesendet`); resetCart(); closeModal('modal-table-grid'); }); }
+    function selectTakeaway() { selectedTable = 'takeaway'; document.getElementById('selected-table-display').innerText = '🥡 Takeaway'; confirmTableSelection(); }
+    function confirmTableSelection() { if(!selectedTable) return; activeTable = selectedTable; closeModal('modal-table-grid'); confirmOrder(); }
+    function openKitchen() { openModal('modal-kitchen'); db.ref('active_orders').on('value', snap=>{ let html=''; snap.forEach(t=>{ t.forEach(b=>{ html+=`<div class="kitchen-order-card"><b>${t.key}</b><div>${Object.values(b.val().items).map(i=>`${i.name} x${i.quantity}`).join(', ')}</div><button onclick="finishOrder('${t.key}','${b.key}')">Fertig</button></div>`; }); }); document.getElementById('kitchen-content').innerHTML = html||'Keine Bestellungen'; }); }
+    function finishOrder(tNum, bId) { db.ref(`active_orders/${tNum}/${bId}`).remove(); }
+    function callWaiter() { db.ref('notifications/waiter').set({timestamp:Date.now()}); showToast("🔔 Kellner gerufen"); }
+    function showLoginModal() { currentPin=''; updatePinDisplay(); openModal('modal-login'); }
+    function updatePinDisplay() { document.getElementById('pin-display').innerText = currentPin.padStart(4,'•'); }
+    function addPinDigit(d) { if(currentPin.length<4) { currentPin+=d; updatePinDisplay(); } }
+    function clearPin() { currentPin=''; updatePinDisplay(); }
+    function submitPin() { if(currentPin==='1234') { closeModal('modal-login'); openAdmin(); } else if(currentPin==='4321') { closeModal('modal-login'); loadStats(); openModal('modal-stats'); } else { showToast("Falscher PIN"); clearPin(); } }
+    function createPinPad() { let pad = document.getElementById('pin-pad'); for(let i=1;i<=9;i++){ let btn=document.createElement('button'); btn.className='pin-btn'; btn.innerText=i; btn.onclick=()=>addPinDigit(i.toString()); pad.appendChild(btn); } let btn0=document.createElement('button'); btn0.className='pin-btn'; btn0.innerText='0'; btn0.onclick=()=>addPinDigit('0'); pad.appendChild(btn0); }
+    function openAdmin() { renderCats(); let filter = document.getElementById('admin-prod-filter'); filter.innerHTML = '<option value="all">Alle</option>'+categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
+    function loadStats() { let total = sales.reduce((s,o)=>s+o.total||0,0); document.getElementById('stats-total').innerText = total.toFixed(2)+'€'; document.getElementById('stats-count').innerText = sales.length; }
+    function showRecipe(id) { let p = products.find(p=>p.id===id); if(p) alert(`Rezept für ${p.name}:\n${p.recipeIngredients||'keine'} \n${p.recipeInstructions||'keine'}`); }
+    function showConfirm(msg,cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
+    function executeConfirm() { if(confirmCallback) { confirmCallback(); confirmCallback=null; } closeModal('modal-confirm'); }
+
+    // Hamburger toggle
+    document.getElementById('hamburgerBtn').onclick = () => document.getElementById('navMenu').classList.toggle('open');
+    // Close menu when clicking outside? optional
+
+    // Main mic button
+    document.getElementById('main-mic-btn').onclick = () => showVoiceModal();
+
+    // Initial load
+    function init() {
+        ensureOrders(); renderCats(); if(categories.length) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); initNoteMic();
+    }
+    function ensureOrders() { categories.forEach((c,i)=>c.order===undefined?c.order=i:0); products.forEach((p,i)=>{p.order===undefined?p.order=i:0; p.recipeIngredients===undefined?p.recipeIngredients='':0; p.recipeInstructions===undefined?p.recipeInstructions='':0;}); }
+    function createTableGrid() { let grid = document.getElementById('table-grid'); for(let i=1;i<=20;i++) grid.innerHTML += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`; }
+    function selectTable(num) { selectedTable = num; document.getElementById('selected-table-display').innerText = `Tisch ${num}`; }
+    function loadFromFirebase() { db.ref('data').once('value', snap=>{ let d=snap.val(); if(d){ categories=d.categories||[]; products=d.products||[]; extras=d.extras||[]; zutaten=d.zutaten||[]; orders=d.orders||[]; sales=d.sales||[]; } ensureOrders(); renderCats(); if(categories.length) renderProds(categories[0].id); }); }
+    init();
 </script>
 </body>
 </html>
