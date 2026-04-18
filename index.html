@@ -53,7 +53,7 @@
         header button:first-child { background: var(--green); }
         header button:nth-child(2) { background: var(--orange); }
         header button:nth-child(3) { background: var(--red); }
-        header button:nth-child(4) { background: #9b59b6; } /* KUNDEN */
+        header button:nth-child(4) { background: #9b59b6; }
         header button:last-child { background: #ff5722; }
 
         main { display: flex; flex: 1; min-height: 0; width: 100%; overflow: hidden; }
@@ -586,8 +586,6 @@
             cursor: pointer;
             font-weight: bold;
         }
-
-        /* Floating Mic Button */
         .fab-mic {
             position: fixed;
             bottom: 25px;
@@ -602,23 +600,16 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 1000;
-            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .fab-mic:hover { transform: scale(1.05); }
-        .fab-mic.recording {
-            background: #ff0000;
-            animation: pulse 1s infinite;
-        }
+        .fab-mic.recording { animation: pulse 1s infinite; background: #ff0000; }
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0.7); }
             70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(231,76,60,0); }
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231,76,60,0); }
         }
-
-        /* Voice Search Modal */
         .voice-modal {
             position: fixed;
             top: 0;
@@ -775,7 +766,6 @@
     </section>
 </main>
 
-<!-- Floating Mic Button -->
 <button id="fab-mic" class="fab-mic" title="Sprachbestellung">🎤</button>
 
 <!-- Recipe View Modal -->
@@ -966,708 +956,96 @@
 </div>
 
 <script>
-    // ========== FIREBASE CONFIG ==========
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCjHwRY3J7KHr4DaX15mWfXvrGUleJk32Q",
         authDomain: "primelpos.firebaseapp.com",
-        databaseURL: "https://primelpos-default-rtdb.europe-west1.firebasedatabase.app/", 
+        databaseURL: "https://primelpos-default-rtdb.europe-west1.firebasedatabase.app/",
         projectId: "primelpos",
         storageBucket: "primelpos.firebasestorage.app",
         messagingSenderId: "151403014246",
         appId: "1:151403014246:web:d88248fa3e2505b7dda5a7"
     };
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Sounds & Toast
     const KITCHEN_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
     const WAITER_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2870/2870-preview.mp3';
+    function playSound(url) { new Audio(url).play().catch(e=>console.log(e)); }
+    function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+    db.ref('notifications/waiter').on('value',snap=>{if(snap.val()?.timestamp) playSound(WAITER_SOUND_URL);});
+    db.ref('notifications/kitchen').on('value',snap=>{if(snap.val()?.timestamp) playSound(KITCHEN_SOUND_URL);});
 
-    function playSound(url) { const audio = new Audio(url); audio.play().catch(e => console.log('Audio play failed:', e)); }
-    function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
-
-    db.ref('notifications/waiter').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(WAITER_SOUND_URL); });
-    db.ref('notifications/kitchen').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(KITCHEN_SOUND_URL); });
-
-    // ========== DATA (no sales array) ==========
+    // Data (no sales)
     let categories = JSON.parse(localStorage.getItem('cats')) || [];
     let products = JSON.parse(localStorage.getItem('prods')) || [];
     let extras = JSON.parse(localStorage.getItem('extras')) || [];
     let zutaten = JSON.parse(localStorage.getItem('zutaten')) || [];
-    
     let cartNew = [];
     let cartLocked = [];
     let activeTable = null;
-    let currentItemIdx = null;
-    let currentNoteIdx = null;
-    let selectedTable = null;
-    let confirmCallback = null;
-    let editContext = { type: null, id: null };
-    let currentShowTable = null;
-    let currentPin = '';
-    let currentProductIdForExtras = null;
-
-    // ========== HELPER ==========
-    function ensureOrders() {
-        categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-        products = products.map((item, index) => { 
-            if (item.order === undefined) item.order = index; 
-            if (item.recipeIngredients === undefined) item.recipeIngredients = ''; 
-            if (item.recipeInstructions === undefined) item.recipeInstructions = '';
-            if (item.imageUrl === undefined) item.imageUrl = '';
-            if (item.description === undefined) item.description = '';
-            return item; 
-        });
-        extras = extras.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-        zutaten = zutaten.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
-    }
-
-    function openModal(id) { const modal = document.getElementById(id); if(modal) { modal.style.display = 'block'; } }
-    function closeModal(id) { 
-        const modal = document.getElementById(id); 
-        if(modal) { modal.style.display = 'none'; }
-        if (id === 'modal-tables' && window.tablesListenerRef) {
-            db.ref('active_orders').off('value', window.tablesListenerRef);
-            window.tablesListenerRef = null;
-        }
-    }
-
-    function showLoginModal() { currentPin = ''; updatePinDisplay(); openModal('modal-login'); }
-    function updatePinDisplay() { document.getElementById('pin-display').textContent = currentPin.padStart(4, '•'); }
-    function addPinDigit(digit) { if (currentPin.length < 4) { currentPin += digit; updatePinDisplay(); } }
-    function clearPin() { currentPin = ''; updatePinDisplay(); }
-    function submitPin() { if (currentPin === '1234') { closeModal('modal-login'); openAdmin(); } else { showToast("Falscher PIN"); clearPin(); } }
-    function createPinPad() { const pad = document.getElementById('pin-pad'); pad.innerHTML = ''; for (let i = 1; i <= 9; i++) { const btn = document.createElement('button'); btn.className = 'pin-btn'; btn.textContent = i; btn.onclick = () => addPinDigit(i.toString()); pad.appendChild(btn); } const btn0 = document.createElement('button'); btn0.className = 'pin-btn'; btn0.textContent = '0'; btn0.onclick = () => addPinDigit('0'); pad.appendChild(btn0); const empty = document.createElement('button'); empty.className = 'pin-btn'; empty.style.visibility = 'hidden'; pad.appendChild(empty); }
-
-    function callWaiter() { db.ref('notifications/waiter').set({ timestamp: Date.now() }).then(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner gerufen"); }).catch(() => { playSound(WAITER_SOUND_URL); showToast("🔔 Kellner (lokal)"); }); }
-    function openCustomerPage() { window.open('kunden.html', '_blank'); }
-    
-    function openAdmin() { renderCats(); const filter = document.getElementById('admin-prod-filter'); if (filter) { filter.innerHTML = '<option value="all">Alle</option>' + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); } switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
-
-    function switchAdminTab(tabId) { document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active')); document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`admin-${tabId}-section`).classList.add('active'); }
-    document.querySelectorAll('.admin-tab-btn').forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); switchAdminTab(tabId); if (tabId === 'categories') renderCategoriesAdmin(); else if (tabId === 'products') renderProductsAdmin(); else if (tabId === 'extras') renderExtrasAdmin(); else if (tabId === 'zutaten') renderZutatenAdmin(); }); });
-
-    // ========== LOAD DATA FROM FIREBASE ==========
-    function loadFromFirebase() { 
-        db.ref('data').once('value', (snapshot) => { 
-            const data = snapshot.val(); 
-            if (data && data.categories) { 
-                categories = data.categories || []; 
-                products = data.products || []; 
-                extras = data.extras || []; 
-                zutaten = data.zutaten || []; 
-            } 
-            ensureOrders(); 
-            renderCats(); 
-            if (categories.length > 0) renderProds(categories[0].id); 
-        }); 
-    }
-    function saveToFirebase() { db.ref('data').set({ categories, products, extras, zutaten }); }
-    function save() { 
-        localStorage.setItem('cats', JSON.stringify(categories)); 
-        localStorage.setItem('prods', JSON.stringify(products)); 
-        localStorage.setItem('extras', JSON.stringify(extras)); 
-        localStorage.setItem('zutaten', JSON.stringify(zutaten)); 
-        saveToFirebase(); 
-    }
-
-    // ========== RENDER CATEGORIES & PRODUCTS ==========
-    function renderCats() { 
-        const grid = document.getElementById('cat-grid'); 
-        if (!grid) return; 
-        const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        grid.innerHTML = sorted.map(c => `<div class="card cat-card" onclick="renderProds(${c.id})">${c.name}</div>`).join(''); 
-        const catSelect = document.getElementById('p-cat-select'); 
-        if (catSelect) catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join(''); 
-    }
-    
-    function renderProds(cid) { 
-        const grid = document.getElementById('prod-grid'); 
-        if (!grid) return; 
-        const sorted = products.filter(p => p.catId == cid).sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        grid.innerHTML = sorted.map(p => `
-            <div class="card prod-card">
-                <div onclick="addToCart(${p.id})" style="cursor:pointer; flex:1;">${p.name}</div>
-                <div class="prod-price" onclick="addToCart(${p.id})" style="cursor:pointer;">${p.price.toFixed(2)} €</div>
-                <button class="recipe-btn" onclick="event.stopPropagation(); showRecipe(${p.id})">📖 Rezept anzeigen</button>
-            </div>
-        `).join(''); 
-    }
-
-    function showRecipe(productId) { 
-        const product = products.find(p => p.id === productId); 
-        if (!product) return; 
-        document.getElementById('recipe-title').innerText = product.name; 
-        document.getElementById('recipe-ingredients').innerHTML = product.recipeIngredients ? product.recipeIngredients.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zutaten hinterlegt</em>'; 
-        document.getElementById('recipe-instructions').innerHTML = product.recipeInstructions ? product.recipeInstructions.replace(/\n/g, '<br>') : '<em class="recipe-empty">Keine Zubereitung hinterlegt</em>'; 
-        openModal('modal-recipe-view'); 
-    }
-
-    // ========== CART FUNCTIONS ==========
-    function renderCart() { 
-        const list = document.getElementById('cart-list'); 
-        if (!list) return; 
-        let total = 0, html = ""; 
-        cartLocked.forEach(item => { 
-            let p = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
-            total += p * (item.quantity || 1);
-            html += `<div class="cart-item locked"><div class="cart-item-main"><span class="cart-item-name">${item.name}</span><span class="cart-item-quantity">x${item.quantity || 1}</span><span class="cart-item-total-price">${(p * (item.quantity || 1)).toFixed(2)}€</span></div><div class="cart-item-extras">${item.selectedExtras ? item.selectedExtras.map(e=>e.name).join(', ') : ''}</div>${item.note ? `<div class="cart-item-note">📝 ${item.note}</div>` : ''}</div>`; 
-        }); 
-        cartNew.forEach((item, idx) => { 
-            let unitPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0); 
-            let qty = item.quantity || 1; 
-            let itemTotal = unitPrice * qty; 
-            total += itemTotal; 
-            html += `<div class="cart-item new">
-                <div class="cart-item-main">
-                    <span class="cart-item-name">${item.name}</span>
-                    <span class="cart-item-quantity">x${qty}</span>
-                    <div class="cart-item-prices">
-                        <span class="cart-item-unit-price">${unitPrice.toFixed(2)}€</span>
-                        <span class="cart-item-total-price">${itemTotal.toFixed(2)}€</span>
-                    </div>
-                </div>
-                ${item.note ? `<div class="cart-item-note">📝 ${item.note}</div>` : ''}
-                ${item.selectedExtras && item.selectedExtras.length ? `<div class="cart-item-extras">+ ${item.selectedExtras.map(e=>e.name).join(', ')}</div>` : ''}
-                <div class="action-btns">
-                    <button class="btn-sm btn-sm-qty" onclick="changeQty(${idx},1)">+1</button>
-                    <button class="btn-sm btn-sm-qty-minus" onclick="changeQty(${idx},-1)">-1</button>
-                    <button class="btn-sm btn-sm-extra" onclick="openExtraTypeSelector(${idx})">Extra</button>
-                    <button class="btn-sm btn-sm-note" onclick="addNote(${idx})">Note</button>
-                    <button class="btn-sm btn-sm-del" onclick="removeFromCart(${idx})">X</button>
-                </div>
-            </div>`; 
-        }); 
-        list.innerHTML = html; 
-        document.getElementById('cart-total-bar').innerText = total.toFixed(2) + ' €'; 
-        document.getElementById('cart-title').innerHTML = activeTable ? (activeTable === 'takeaway' ? '🥡 Takeaway' : "Tisch " + activeTable) : "Warenkorb"; 
-    }
-
-    function addToCart(pid) { 
-        const p = products.find(i => i.id == pid); 
-        if (!p) return; 
-        cartNew.push({...p, tempId: Date.now()+Math.random(), selectedExtras: [], note: "", quantity: 1}); 
-        renderCart(); 
-    }
-    function changeQty(i,d) { 
-        if (cartNew[i]) { 
-            cartNew[i].quantity = (cartNew[i].quantity||1)+d; 
-            if (cartNew[i].quantity<=0) cartNew.splice(i,1); 
-            renderCart(); 
-        } 
-    }
-    function removeFromCart(i) { cartNew.splice(i,1); renderCart(); }
-    function clearNewCartOnly() { 
-        if(cartNew.length) { 
-            showConfirm("Möchten Sie nur die neuen Artikel löschen? (Bereits gesendete bleiben erhalten)", () => { cartNew = []; renderCart(); }); 
-        } else { showToast("Keine neuen Artikel im Warenkorb"); }
-    }
-    function resetCart() { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
-
-    // ========== TABLE HANDLING (Zufügen statt Pay) ==========
-    function openTables() { 
-        updateTablesGrid(); 
-        openModal('modal-tables'); 
-        startTablesListener(); 
-    }
-    
-    function startTablesListener() {
-        if (window.tablesListenerRef) {
-            db.ref('active_orders').off('value', window.tablesListenerRef);
-        }
-        window.tablesListenerRef = (snapshot) => {
-            const tablesModal = document.getElementById('modal-tables');
-            if (tablesModal && tablesModal.style.display === 'block') {
-                updateTablesGrid();
-            }
-        };
-        db.ref('active_orders').on('value', window.tablesListenerRef);
-    }
-
-    async function updateTablesGrid() {
-        const grid = document.getElementById('tables-grid');
-        if (!grid) return;
-        const snapshot = await db.ref('active_orders').once('value');
-        const allData = snapshot.val() || {};
-        const tableNumbers = Object.keys(allData).filter(key => key !== 'takeaway');
-        const takeawayExists = allData['takeaway'] ? true : false;
-        let html = '';
-        for (let t of tableNumbers) {
-            const batches = allData[t];
-            let lastTime = '';
-            let batchCount = 0;
-            if (batches) {
-                batchCount = Object.keys(batches).length;
-                const lastBatchKey = Object.keys(batches).pop();
-                if (lastBatchKey && batches[lastBatchKey].time) lastTime = batches[lastBatchKey].time;
-            }
-            html += `<div class="table-box">
-                <h3>Tisch ${t}</h3>
-                <small>${batchCount} Bestellungen | ${lastTime ? '🕒 ' + lastTime : ''}</small>
-                <div style="margin-top: 10px;">
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); showOrderFromFirebase('${t}')">Show</button>
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); addToExistingTable('${t}')" style="background:var(--green);">Zufügen</button>
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); confirmDeleteTableFromCard('${t}')" style="background:var(--red);">Löschen</button>
-                </div>
-            </div>`;
-        }
-        if (takeawayExists) {
-            const batches = allData['takeaway'];
-            let lastTime = '';
-            let batchCount = 0;
-            if (batches) {
-                batchCount = Object.keys(batches).length;
-                const lastBatchKey = Object.keys(batches).pop();
-                if (lastBatchKey && batches[lastBatchKey].time) lastTime = batches[lastBatchKey].time;
-            }
-            html += `<div class="table-box">
-                <h3>🥡 Takeaway</h3>
-                <small>${batchCount} Bestellungen | ${lastTime ? '🕒 ' + lastTime : ''}</small>
-                <div style="margin-top: 10px;">
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); showOrderFromFirebase('takeaway')">Show</button>
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); addToExistingTable('takeaway')" style="background:var(--green);">Zufügen</button>
-                    <button onclick="event.stopPropagation(); closeModal('modal-tables'); confirmDeleteTableFromCard('takeaway')" style="background:var(--red);">Löschen</button>
-                </div>
-            </div>`;
-        }
-        grid.innerHTML = html || "Keine aktiven Tische";
-    }
-
-    async function addToExistingTable(tableId) {
-        // Lade alle Batches dieses Tisches aus active_orders
-        const snapshot = await db.ref('active_orders/' + tableId).once('value');
-        const batches = snapshot.val();
-        cartLocked = [];
-        if (batches) {
-            Object.values(batches).forEach(batch => {
-                if (batch.items) {
-                    batch.items.forEach(item => {
-                        cartLocked.push({ ...item });
-                    });
-                }
-            });
-        }
-        activeTable = tableId;
-        cartNew = []; // Wichtig: leere neue Artikel
-        renderCart();
-        showToast(`Tisch ${tableId === 'takeaway' ? 'Takeaway' : tableId} geladen. Sie können neue Bestellungen hinzufügen.`);
-    }
-
-    async function showOrderFromFirebase(tableId) {
-        const snapshot = await db.ref('active_orders/' + tableId).once('value');
-        const batches = snapshot.val();
-        if (!batches) { showToast("Keine Bestellungen"); return; }
-        let itemsHtml = '';
-        let total = 0;
-        Object.values(batches).forEach(batch => {
-            if (batch.items) {
-                batch.items.forEach(item => {
-                    let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
-                    let qty = item.quantity || 1;
-                    total += itemPrice * qty;
-                    itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span>${(itemPrice * qty).toFixed(2)}€</span></div>`;
-                    if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`;
-                });
-            }
-        });
-        document.getElementById('show-order-items').innerHTML = itemsHtml;
-        document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €';
-        document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`;
-        currentShowTable = tableId;
-        openModal('modal-show-order');
-    }
-
-    function confirmDeleteTableFromCard(tableId) {
-        currentShowTable = tableId;
-        showConfirm(`Tisch ${tableId} wirklich löschen? (Alle Bestellungen werden entfernt)`, async () => {
-            await db.ref('active_orders/' + tableId).remove();
-            if (activeTable === tableId) resetCart();
-            showToast(`Tisch ${tableId} gelöscht`);
-            updateTablesGrid();
-        });
-    }
-
-    function confirmDeleteTable() {
-        if (!currentShowTable) return;
-        showConfirm(`Tisch ${currentShowTable} wirklich löschen?`, async () => {
-            await db.ref('active_orders/' + currentShowTable).remove();
-            if (activeTable === currentShowTable) resetCart();
-            closeModal('modal-show-order');
-            updateTablesGrid();
-            showToast(`Tisch ${currentShowTable} gelöscht`);
-        });
-    }
-
-    // ========== SEND ORDER (nur neue Artikel) ==========
-    function initiateSend() { 
-        if(cartNew.length===0) return alert("Keine neuen Artikel zum Senden!"); 
-        if(activeTable) { 
-            confirmOrder(); 
-        } else { 
-            updateFreeTablesDisplay(); 
-            openModal('modal-table-grid'); 
-        } 
-    }
-    
-    async function confirmOrder() { 
-        const tNum = activeTable; 
-        if(!tNum) return alert("Tisch fehlt!"); 
-        const newBatch = { 
-            batchId: Date.now(), 
-            time: new Date().toLocaleTimeString(), 
-            date: new Date().toLocaleDateString(), 
-            items: [...cartNew], 
-            status: 'new' 
-        }; 
-        try {
-            await db.ref('active_orders/' + tNum).push(newBatch);
-            await db.ref('notifications/kitchen').set({ timestamp: Date.now() });
-            // Nach dem Senden: Die gesendeten Artikel zu cartLocked hinzufügen (damit sie als "bereits bestellt" angezeigt werden)
-            cartLocked.push(...cartNew.map(item => ({ ...item })));
-            cartNew = [];
-            renderCart();
-            showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet`);
-            closeModal('modal-table-grid');
-        } catch(e) { 
-            console.error(e); 
-            alert("Fehler beim Senden!"); 
-        }
-    }
-
-    function createTableGrid() { 
-        const grid = document.getElementById('table-grid'); 
-        if (!grid) return; 
-        let html = ''; 
-        for (let i=1; i<=20; i++) html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`; 
-        grid.innerHTML = html; 
-    }
-    function selectTable(num) { 
-        document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); 
-        event.target.classList.add('selected'); 
-        selectedTable = num; 
-        document.getElementById('selected-table-display').innerText = `Tisch ${num}`; 
-    }
-    function selectTakeaway() { 
-        document.querySelectorAll('#table-grid .table-btn').forEach(btn => btn.classList.remove('selected')); 
-        selectedTable = 'takeaway'; 
-        document.getElementById('selected-table-display').innerText = '🥡 Takeaway'; 
-    }
-    function confirmTableSelection() { 
-        if (!selectedTable) { alert("Bitte wählen Sie einen Tisch oder Takeaway!"); return; } 
-        activeTable = selectedTable; 
-        closeModal('modal-table-grid'); 
-        confirmOrder(); 
-    }
-    function updateFreeTablesDisplay() { 
-        db.ref('active_orders').once('value', (snapshot) => { 
-            const occupiedTables = []; 
-            snapshot.forEach((tableSnapshot) => { 
-                const tableNum = tableSnapshot.key; 
-                if (tableNum !== 'takeaway') occupiedTables.push(tableNum); 
-            }); 
-            const tableButtons = document.querySelectorAll('#table-grid .table-btn'); 
-            tableButtons.forEach(btn => { 
-                const tableNum = btn.textContent; 
-                if (occupiedTables.includes(tableNum)) btn.style.display = 'none'; 
-                else btn.style.display = 'inline-block'; 
-            }); 
-        }); 
-    }
-
-    // ========== EXTRAS, NOTES ==========
-    function addNote(idx) { 
-        currentNoteIdx = idx; 
-        const item = cartNew[idx]; 
-        if(item) { 
-            document.getElementById('note-item-name').innerText = item.name; 
-            document.getElementById('note-text-input').value = item.note || ""; 
-            openModal('modal-note'); 
-            setTimeout(()=>document.getElementById('note-text-input').focus(),300); 
-        } 
-    }
-    function saveNote() { 
-        const t = document.getElementById('note-text-input').value; 
-        if (currentNoteIdx!==null && cartNew[currentNoteIdx]) { 
-            cartNew[currentNoteIdx].note = t; 
-            renderCart(); 
-            closeModal('modal-note'); 
-        } 
-    }
-    function openExtraTypeSelector(idx) { 
-        currentItemIdx = idx; 
-        openModal('modal-extra-type'); 
-    }
-    function selectExtraType(type) { 
-        closeModal('modal-extra-type'); 
-        showExtrasList(type==='extras'? extras : zutaten, type==='extras'? 'extra' : 'zutat'); 
-    }
-    function showExtrasList(list, type) { 
-        const grid = document.getElementById('extras-grid'); 
-        document.getElementById('extras-modal-title').innerText = type==='extra'? 'Extras wählen' : 'Zutaten wählen'; 
-        grid.innerHTML = list.map(e => `<div class="card" onclick="selectExtra(${e.id},'${type}')">${e.name}<br>+${e.price.toFixed(2)}€</div>`).join(''); 
-        openModal('modal-extras'); 
-    }
-    function selectExtra(eid, type) { 
-        let ex = (type==='zutat') ? zutaten.find(e=>e.id==eid) : extras.find(e=>e.id==eid); 
-        if (ex) { 
-            cartNew[currentItemIdx].selectedExtras.push(ex); 
-            renderCart(); 
-        } 
-        closeModal('modal-extras'); 
-    }
-
-    // ========== ADMIN CATEGORIES ==========
-    function renderCategoriesAdmin() { 
-        const cont = document.getElementById('admin-cat-list'); 
-        if (!cont) return; 
-        const sorted = [...categories].sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        cont.innerHTML = sorted.map(c => `<div class="admin-item"><span><strong>${c.name}</strong></span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join(''); 
-    }
-    function addCategory() { 
-        const name = document.getElementById('new-cat-name').value.trim(); 
-        if(name) { 
-            const maxOrder = categories.reduce((max, c) => Math.max(max, c.order || 0), -1) + 1; 
-            categories.push({id: Date.now(), name, order: maxOrder}); 
-            save(); 
-            renderCats(); 
-            renderCategoriesAdmin(); 
-            document.getElementById('new-cat-name').value=''; 
-        } 
-    }
-
-    // ========== ADMIN PRODUCTS mit Bild und Beschreibung ==========
-    function renderProductsAdmin() { 
-        const cont = document.getElementById('admin-product-list'); 
-        if (!cont) return; 
-        const filter = document.getElementById('admin-prod-filter'); 
-        const catId = filter ? filter.value : 'all'; 
-        let filtered = (catId === 'all') ? products : products.filter(p => p.catId == catId); 
-        const sorted = [...filtered].sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        cont.innerHTML = sorted.map(p => { 
-            const cat = categories.find(c => c.id == p.catId); 
-            return `<div class="admin-item"><div style="flex:2;"><strong>${p.name}</strong></div><div style="flex:1;">${p.price.toFixed(2)}€</div><div style="flex:1;">${cat ? cat.name : '?'}</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`; 
-        }).join(''); 
-    }
-    function addProduct() { 
-        const name = document.getElementById('p-name').value.trim(); 
-        const price = parseFloat(document.getElementById('p-price').value); 
-        const cat = parseInt(document.getElementById('p-cat-select').value); 
-        const imageUrl = document.getElementById('p-image').value.trim();
-        if(name && !isNaN(price) && price>=0) { 
-            const maxOrder = products.filter(p => p.catId == cat).reduce((max, p) => Math.max(max, p.order || 0), -1) + 1;
-            products.push({id:Date.now(), catId:cat, name, price, order: maxOrder, recipeIngredients: '', recipeInstructions: '', imageUrl: imageUrl, description: ''}); 
-            save(); 
-            renderProductsAdmin(); 
-            renderProds(cat); 
-            document.getElementById('p-name').value=''; 
-            document.getElementById('p-price').value='';
-            document.getElementById('p-image').value='';
-        } else alert("Bitte Name und Preis eingeben"); 
-    }
-
-    // ========== ADMIN EXTRAS & ZUTATEN ==========
-    function renderExtrasAdmin() { 
-        const cont = document.getElementById('admin-ex-list'); 
-        if (!cont) return; 
-        const sorted = [...extras].sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        cont.innerHTML = sorted.map(e => `<div class="admin-item"><span><strong>${e.name}</strong> (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join(''); 
-    }
-    function renderZutatenAdmin() { 
-        const cont = document.getElementById('admin-zut-list'); 
-        if (!cont) return; 
-        const sorted = [...zutaten].sort((a,b) => (a.order || 0) - (b.order || 0)); 
-        cont.innerHTML = sorted.map(z => `<div class="admin-item"><span><strong>${z.name}</strong> (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join(''); 
-    }
-    function addExtra(type) { 
-        let name, price; 
-        if (type==='extra') { name = document.getElementById('ex-name').value.trim(); price = parseFloat(document.getElementById('ex-price').value); } 
-        else { name = document.getElementById('zut-name').value.trim(); price = parseFloat(document.getElementById('zut-price').value); } 
-        if(name && !isNaN(price) && price>=0) { 
-            const arr = type==='extra' ? extras : zutaten;
-            const maxOrder = arr.reduce((max, e) => Math.max(max, e.order || 0), -1) + 1;
-            const newItem = {id:Date.now(), name, price, order: maxOrder}; 
-            if (type==='extra') { extras.push(newItem); renderExtrasAdmin(); document.getElementById('ex-name').value=''; document.getElementById('ex-price').value=''; } 
-            else { zutaten.push(newItem); renderZutatenAdmin(); document.getElementById('zut-name').value=''; document.getElementById('zut-price').value=''; } 
-            save(); 
-        } else alert("Bitte gültige Daten!"); 
-    }
-
-    // ========== MOVE UP/DOWN (fixed reorder) ==========
-    async function moveUp(type, id) {
-        let arr, getOrder, setOrder;
-        if (type === 'category') { arr = categories; getOrder = c => c.order; setOrder = (c, o) => c.order = o; }
-        else if (type === 'product') { arr = products; getOrder = p => p.order; setOrder = (p, o) => p.order = o; }
-        else if (type === 'extra') { arr = extras; getOrder = e => e.order; setOrder = (e, o) => e.order = o; }
-        else if (type === 'zutat') { arr = zutaten; getOrder = z => z.order; setOrder = (z, o) => z.order = o; }
-        else return;
-        const sorted = [...arr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
-        const index = sorted.findIndex(item => item.id === id);
-        if (index <= 0) return;
-        // swap orders
-        const currentOrder = getOrder(sorted[index]);
-        const prevOrder = getOrder(sorted[index-1]);
-        setOrder(sorted[index], prevOrder);
-        setOrder(sorted[index-1], currentOrder);
-        // re-sort and reassign sequential orders to avoid gaps
-        const reSorted = [...arr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
-        reSorted.forEach((item, idx) => setOrder(item, idx));
-        save();
-        // refresh views
-        if (type === 'category') { renderCategoriesAdmin(); renderCats(); }
-        else if (type === 'product') { renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); }
-        else if (type === 'extra') renderExtrasAdmin();
-        else if (type === 'zutat') renderZutatenAdmin();
-    }
-    async function moveDown(type, id) {
-        let arr, getOrder, setOrder;
-        if (type === 'category') { arr = categories; getOrder = c => c.order; setOrder = (c, o) => c.order = o; }
-        else if (type === 'product') { arr = products; getOrder = p => p.order; setOrder = (p, o) => p.order = o; }
-        else if (type === 'extra') { arr = extras; getOrder = e => e.order; setOrder = (e, o) => e.order = o; }
-        else if (type === 'zutat') { arr = zutaten; getOrder = z => z.order; setOrder = (z, o) => z.order = o; }
-        else return;
-        const sorted = [...arr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
-        const index = sorted.findIndex(item => item.id === id);
-        if (index >= sorted.length-1) return;
-        const currentOrder = getOrder(sorted[index]);
-        const nextOrder = getOrder(sorted[index+1]);
-        setOrder(sorted[index], nextOrder);
-        setOrder(sorted[index+1], currentOrder);
-        const reSorted = [...arr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
-        reSorted.forEach((item, idx) => setOrder(item, idx));
-        save();
-        if (type === 'category') { renderCategoriesAdmin(); renderCats(); }
-        else if (type === 'product') { renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); }
-        else if (type === 'extra') renderExtrasAdmin();
-        else if (type === 'zutat') renderZutatenAdmin();
-    }
-
-    // ========== EDIT MODAL (FIXED: using data from array) ==========
-    function openEditModal(type, id) {
-        editContext = { type, id };
-        let item = null;
-        if (type === 'category') item = categories.find(c => c.id === id);
-        else if (type === 'product') item = products.find(p => p.id === id);
-        else if (type === 'extra') item = extras.find(e => e.id === id);
-        else if (type === 'zutat') item = zutaten.find(z => z.id === id);
-        if (!item) return;
-        document.getElementById('edit-title').innerText = type==='category'? 'Kategorie bearbeiten' : (type==='product'? 'Produkt bearbeiten' : (type==='extra'? 'Extra bearbeiten' : 'Zutat bearbeiten'));
-        document.getElementById('edit-input').value = item.name;
-        const priceInput = document.getElementById('edit-price');
-        const imageInput = document.getElementById('edit-image');
-        const descInput = document.getElementById('edit-description');
-        const ingredientsInput = document.getElementById('edit-recipe-ingredients');
-        const instructionsInput = document.getElementById('edit-recipe-instructions');
-        // reset visibility
-        priceInput.style.display = 'none';
-        imageInput.style.display = 'none';
-        descInput.style.display = 'none';
-        ingredientsInput.style.display = 'none';
-        instructionsInput.style.display = 'none';
-        if (type === 'product') {
-            priceInput.style.display = 'block';
-            priceInput.value = item.price || 0;
-            imageInput.style.display = 'block';
-            imageInput.value = item.imageUrl || '';
-            descInput.style.display = 'block';
-            descInput.value = item.description || '';
-            ingredientsInput.style.display = 'block';
-            instructionsInput.style.display = 'block';
-            ingredientsInput.value = item.recipeIngredients || '';
-            instructionsInput.value = item.recipeInstructions || '';
-        } else if (type === 'extra' || type === 'zutat') {
-            priceInput.style.display = 'block';
-            priceInput.value = item.price || 0;
-        }
-        openModal('modal-edit');
-    }
-    function saveEdit() {
-        const newName = document.getElementById('edit-input').value.trim();
-        if (!newName) return alert("Name leer!");
-        const type = editContext.type;
-        const id = editContext.id;
-        if (type === 'category') {
-            const cat = categories.find(c => c.id === id);
-            if (cat) { cat.name = newName; save(); renderCats(); renderCategoriesAdmin(); }
-        } else if (type === 'product') {
-            const newPrice = parseFloat(document.getElementById('edit-price').value);
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!");
-            const newImage = document.getElementById('edit-image').value.trim();
-            const newDesc = document.getElementById('edit-description').value;
-            const newIngredients = document.getElementById('edit-recipe-ingredients').value;
-            const newInstructions = document.getElementById('edit-recipe-instructions').value;
-            const prod = products.find(p => p.id === id);
-            if (prod) {
-                prod.name = newName;
-                prod.price = newPrice;
-                prod.imageUrl = newImage;
-                prod.description = newDesc;
-                prod.recipeIngredients = newIngredients;
-                prod.recipeInstructions = newInstructions;
-                save();
-                // update cart items if present
-                cartNew = cartNew.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, imageUrl:prod.imageUrl, description:prod.description} : item);
-                cartLocked = cartLocked.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, imageUrl:prod.imageUrl, description:prod.description} : item);
-                renderCart();
-                renderProductsAdmin();
-                if (prod.catId) renderProds(prod.catId);
-            }
-        } else if (type === 'extra') {
-            const newPrice = parseFloat(document.getElementById('edit-price').value);
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!");
-            const extra = extras.find(e => e.id === id);
-            if (extra) { extra.name = newName; extra.price = newPrice; save(); renderExtrasAdmin(); }
-        } else if (type === 'zutat') {
-            const newPrice = parseFloat(document.getElementById('edit-price').value);
-            if (isNaN(newPrice)||newPrice<0) return alert("Preis ungültig!");
-            const zutat = zutaten.find(z => z.id === id);
-            if (zutat) { zutat.name = newName; zutat.price = newPrice; save(); renderZutatenAdmin(); }
-        }
-        closeModal('modal-edit');
-    }
-
-    function confirmDelete(type, id) {
-        let msg = '';
-        if (type === 'category') msg = 'Kategorie löschen?';
-        else if (type === 'product') msg = 'Produkt löschen?';
-        else if (type === 'extra') msg = 'Extra löschen?';
-        else if (type === 'zutat') msg = 'Zutat löschen?';
-        showConfirm(msg, () => {
-            if (type === 'category') { categories = categories.filter(c => c.id !== id); save(); renderCats(); renderCategoriesAdmin(); }
-            else if (type === 'product') { products = products.filter(p => p.id !== id); save(); renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); }
-            else if (type === 'extra') { extras = extras.filter(e => e.id !== id); save(); renderExtrasAdmin(); }
-            else if (type === 'zutat') { zutaten = zutaten.filter(z => z.id !== id); save(); renderZutatenAdmin(); }
-        });
-    }
-
-    // ========== KITCHEN ==========
-    function openKitchen() { 
-        openModal('modal-kitchen'); 
-        const container = document.getElementById('kitchen-content'); 
-        container.innerHTML = "<h2 style='color:white'>Verbindung wird hergestellt...</h2>"; 
-        db.ref('active_orders').on('value', (snapshot) => { 
-            const allData = snapshot.val(); 
-            if (!allData) { container.innerHTML = "<h1 style='color:white; text-align:center; width:100%'>KEINE BESTELLUNGEN</h1>"; return; } 
-            let allOrders = []; 
-            Object.entries(allData).forEach(([tNum, batches]) => { 
-                Object.entries(batches).forEach(([bId, batch]) => { 
-                    allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000 }); 
-                }); 
-            }); 
-            allOrders.sort((a, b) => b.timestamp - a.timestamp); 
-            let html = ""; 
-            allOrders.forEach(order => { 
-                const lateClass = order.isLate ? "late-blink" : ""; 
-                html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; 
-            }); 
-            container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; 
-        }); 
-    }
-    function finishOrder(tNum, bId) { db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e)); }
-
-    // ========== VOICE RECOGNITION (ORIGINAL ALGORITHM) ==========
+    let currentItemIdx, currentNoteIdx, selectedTable, confirmCallback, editContext={}, currentShowTable, currentPin='';
     let mainRecognition = null;
-    let isMainRecording = false;
 
+    // Helper functions
+    function ensureOrders() {
+        categories = categories.map((c,i)=>{if(c.order===undefined)c.order=i; return c;});
+        products = products.map((p,i)=>{if(p.order===undefined)p.order=i; p.imageUrl=p.imageUrl||''; p.description=p.description||''; p.recipeIngredients=p.recipeIngredients||''; p.recipeInstructions=p.recipeInstructions||''; return p;});
+        extras = extras.map((e,i)=>{if(e.order===undefined)e.order=i; return e;});
+        zutaten = zutaten.map((z,i)=>{if(z.order===undefined)z.order=i; return z;});
+    }
+    function openModal(id){ document.getElementById(id).style.display='block'; }
+    function closeModal(id){ document.getElementById(id).style.display='none'; if(id==='modal-tables' && window.tablesListenerRef){ db.ref('active_orders').off('value', window.tablesListenerRef); window.tablesListenerRef=null; } }
+    function save(){ localStorage.setItem('cats',JSON.stringify(categories)); localStorage.setItem('prods',JSON.stringify(products)); localStorage.setItem('extras',JSON.stringify(extras)); localStorage.setItem('zutaten',JSON.stringify(zutaten)); db.ref('data').set({categories,products,extras,zutaten}); }
+    function loadFromFirebase(){ db.ref('data').once('value',snap=>{ if(snap.val()){ categories=snap.val().categories||[]; products=snap.val().products||[]; extras=snap.val().extras||[]; zutaten=snap.val().zutaten||[]; } ensureOrders(); renderCats(); if(categories.length) renderProds(categories[0].id); }); }
+
+    // Render categories & products
+    function renderCats(){ const grid=document.getElementById('cat-grid'); if(!grid)return; const sorted=[...categories].sort((a,b)=>(a.order||0)-(b.order||0)); grid.innerHTML=sorted.map(c=>`<div class="card cat-card" onclick="renderProds(${c.id})">${c.name}</div>`).join(''); const sel=document.getElementById('p-cat-select'); if(sel) sel.innerHTML=categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); }
+    function renderProds(cid){ const grid=document.getElementById('prod-grid'); if(!grid)return; const sorted=products.filter(p=>p.catId==cid).sort((a,b)=>(a.order||0)-(b.order||0)); grid.innerHTML=sorted.map(p=>`<div class="card prod-card"><div onclick="addToCart(${p.id})">${p.name}</div><div class="prod-price" onclick="addToCart(${p.id})">${p.price.toFixed(2)}€</div><button class="recipe-btn" onclick="event.stopPropagation(); showRecipe(${p.id})">📖 Rezept</button></div>`).join(''); }
+    function showRecipe(pid){ const p=products.find(p=>p.id==pid); if(!p)return; alert(`Rezept für ${p.name}\nZutaten: ${p.recipeIngredients||'-'}\nZubereitung: ${p.recipeInstructions||'-'}`); }
+
+    // Cart rendering
+    function renderCart(){ const list=document.getElementById('cart-list'); if(!list)return; let total=0, html=''; cartLocked.forEach(item=>{ let p=item.price+(item.selectedExtras?item.selectedExtras.reduce((s,e)=>s+e.price,0):0); total+=p*(item.quantity||1); html+=`<div class="cart-item locked"><div class="cart-item-main"><span class="cart-item-name">${item.name}</span><span class="cart-item-quantity">x${item.quantity||1}</span><span class="cart-item-total-price">${(p*(item.quantity||1)).toFixed(2)}€</span></div><div class="cart-item-extras">${item.selectedExtras?item.selectedExtras.map(e=>e.name).join(', '):''}</div>${item.note?`<div class="cart-item-note">📝 ${item.note}</div>`:''}</div>`; }); cartNew.forEach((item,idx)=>{ let unit=item.price+(item.selectedExtras?item.selectedExtras.reduce((s,e)=>s+e.price,0):0); let qty=item.quantity||1; let itemTotal=unit*qty; total+=itemTotal; html+=`<div class="cart-item new"><div class="cart-item-main"><span class="cart-item-name">${item.name}</span><span class="cart-item-quantity">x${qty}</span><span class="cart-item-total-price">${itemTotal.toFixed(2)}€</span></div>${item.note?`<div class="cart-item-note">📝 ${item.note}</div>`:''}${item.selectedExtras&&item.selectedExtras.length?`<div class="cart-item-extras">+ ${item.selectedExtras.map(e=>e.name).join(', ')}</div>`:''}<div class="action-btns"><button class="btn-sm btn-sm-qty" onclick="changeQty(${idx},1)">+1</button><button class="btn-sm btn-sm-qty-minus" onclick="changeQty(${idx},-1)">-1</button><button class="btn-sm btn-sm-extra" onclick="openExtraTypeSelector(${idx})">Extra</button><button class="btn-sm btn-sm-note" onclick="addNote(${idx})">Note</button><button class="btn-sm btn-sm-del" onclick="removeFromCart(${idx})">X</button></div></div>`; }); list.innerHTML=html; document.getElementById('cart-total-bar').innerText=total.toFixed(2)+' €'; document.getElementById('cart-title').innerHTML=activeTable?(activeTable==='takeaway'?'🥡 Takeaway':'Tisch '+activeTable):'Warenkorb'; }
+    function addToCart(pid){ const p=products.find(i=>i.id==pid); if(p) cartNew.push({...p,tempId:Date.now()+Math.random(),selectedExtras:[],note:'',quantity:1}); renderCart(); }
+    function changeQty(i,d){ if(cartNew[i]){ cartNew[i].quantity=(cartNew[i].quantity||1)+d; if(cartNew[i].quantity<=0) cartNew.splice(i,1); renderCart(); } }
+    function removeFromCart(i){ cartNew.splice(i,1); renderCart(); }
+    function clearNewCartOnly(){ if(cartNew.length) showConfirm('Neue Artikel löschen?',()=>{ cartNew=[]; renderCart(); }); else showToast('Keine neuen Artikel'); }
+    function resetCart(){ cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
+
+    // Table handling (Zufügen statt Pay)
+    async function updateTablesGrid(){ const grid=document.getElementById('tables-grid'); if(!grid)return; const snap=await db.ref('active_orders').once('value'); const data=snap.val()||{}; let html=''; for(let [table,batches] of Object.entries(data)){ let batchCount=Object.keys(batches).length; let lastTime=''; let lastKey=Object.keys(batches).pop(); if(lastKey&&batches[lastKey].time) lastTime=batches[lastKey].time; html+=`<div class="table-box"><h3>${table==='takeaway'?'🥡 Takeaway':'Tisch '+table}</h3><small>${batchCount} Best. | ${lastTime}</small><div><button onclick="closeModal('modal-tables'); showOrderFromFirebase('${table}')">Show</button><button onclick="closeModal('modal-tables'); addToExistingTable('${table}')" style="background:var(--green);">Zufügen</button><button onclick="closeModal('modal-tables'); confirmDeleteTableFromCard('${table}')" style="background:var(--red);">Löschen</button></div></div>`; } grid.innerHTML=html||'Keine aktiven Tische'; }
+    async function addToExistingTable(tableId){ const snap=await db.ref('active_orders/'+tableId).once('value'); const batches=snap.val(); cartLocked=[]; if(batches){ Object.values(batches).forEach(b=>{ if(b.items) b.items.forEach(i=>cartLocked.push({...i})); }); } activeTable=tableId; cartNew=[]; renderCart(); showToast(`Tisch ${tableId} geladen, neue Bestellung möglich`); }
+    async function showOrderFromFirebase(tableId){ const snap=await db.ref('active_orders/'+tableId).once('value'); const batches=snap.val(); if(!batches){ showToast('Keine Bestellungen'); return; } let items='', total=0; Object.values(batches).forEach(b=>{ if(b.items) b.items.forEach(i=>{ let price=i.price+(i.selectedExtras?i.selectedExtras.reduce((s,e)=>s+e.price,0):0); let qty=i.quantity||1; total+=price*qty; items+=`<div>${i.name} x${qty} ${i.selectedExtras?.map(e=>e.name).join(',')||''}</div>`; if(i.note) items+=`<div style="color:red">📝${i.note}</div>`; }); }); document.getElementById('show-order-items').innerHTML=items; document.getElementById('show-order-total').innerText=total.toFixed(2)+'€'; document.getElementById('show-order-title').innerText=tableId==='takeaway'?'🥡 Takeaway':'Tisch '+tableId; currentShowTable=tableId; openModal('modal-show-order'); }
+    function confirmDeleteTableFromCard(tableId){ currentShowTable=tableId; showConfirm(`Tisch ${tableId} löschen?`,async()=>{ await db.ref('active_orders/'+tableId).remove(); if(activeTable===tableId) resetCart(); showToast(`Tisch ${tableId} gelöscht`); updateTablesGrid(); }); }
+    function confirmDeleteTable(){ if(!currentShowTable) return; showConfirm(`Tisch ${currentShowTable} löschen?`,async()=>{ await db.ref('active_orders/'+currentShowTable).remove(); if(activeTable===currentShowTable) resetCart(); closeModal('modal-show-order'); updateTablesGrid(); }); }
+    function initiateSend(){ if(cartNew.length===0) return alert('Keine neuen Artikel'); if(activeTable) confirmOrder(); else{ updateFreeTablesDisplay(); openModal('modal-table-grid'); } }
+    async function confirmOrder(){ const tNum=activeTable; if(!tNum) return; const newBatch={ batchId:Date.now(), time:new Date().toLocaleTimeString(), date:new Date().toLocaleDateString(), items:[...cartNew], status:'new' }; await db.ref('active_orders/'+tNum).push(newBatch); await db.ref('notifications/kitchen').set({timestamp:Date.now()}); // Clear everything after sending: cartNew, cartLocked, activeTable -> empty cart
+    resetCart(); // Now cart is completely empty
+    showToast(`Bestellung für ${tNum==='takeaway'?'Takeaway':'Tisch '+tNum} gesendet`); closeModal('modal-table-grid'); }
+    function createTableGrid(){ const g=document.getElementById('table-grid'); if(!g)return; let h=''; for(let i=1;i<=20;i++) h+=`<button class="table-btn" onclick="selectTable(${i})">${i}</button>`; g.innerHTML=h; }
+    function selectTable(num){ document.querySelectorAll('#table-grid .table-btn').forEach(b=>b.classList.remove('selected')); event.target.classList.add('selected'); selectedTable=num; document.getElementById('selected-table-display').innerText='Tisch '+num; }
+    function selectTakeaway(){ document.querySelectorAll('#table-grid .table-btn').forEach(b=>b.classList.remove('selected')); selectedTable='takeaway'; document.getElementById('selected-table-display').innerText='🥡 Takeaway'; }
+    function confirmTableSelection(){ if(!selectedTable){ alert('Bitte Tisch wählen'); return; } activeTable=selectedTable; closeModal('modal-table-grid'); confirmOrder(); }
+    function updateFreeTablesDisplay(){ db.ref('active_orders').once('value',snap=>{ const occupied=[]; snap.forEach(ts=>{ if(ts.key!=='takeaway') occupied.push(ts.key); }); document.querySelectorAll('#table-grid .table-btn').forEach(btn=>{ if(occupied.includes(btn.textContent)) btn.style.display='none'; else btn.style.display='inline-block'; }); }); }
+    function openTables(){ updateTablesGrid(); openModal('modal-tables'); }
+    function openCustomerPage(){ window.open('kunden.html','_blank'); }
+    function callWaiter(){ db.ref('notifications/waiter').set({timestamp:Date.now()}); playSound(WAITER_SOUND_URL); showToast('🔔 Kellner gerufen'); }
+
+    // Extras & Notes
+    function openExtraTypeSelector(idx){ currentItemIdx=idx; openModal('modal-extra-type'); }
+    function selectExtraType(type){ closeModal('modal-extra-type'); showExtrasList(type==='extras'?extras:zutaten,type); }
+    function showExtrasList(list,type){ const g=document.getElementById('extras-grid'); document.getElementById('extras-modal-title').innerText=type==='extras'?'Extras':'Zutaten'; g.innerHTML=list.map(e=>`<div class="card" onclick="selectExtra(${e.id},'${type}')">${e.name}<br>+${e.price.toFixed(2)}€</div>`).join(''); openModal('modal-extras'); }
+    function selectExtra(eid,type){ let ex=(type==='zutat')?zutaten.find(e=>e.id==eid):extras.find(e=>e.id==eid); if(ex){ cartNew[currentItemIdx].selectedExtras.push(ex); renderCart(); } closeModal('modal-extras'); }
+    function addNote(idx){ currentNoteIdx=idx; const item=cartNew[idx]; if(item){ document.getElementById('note-item-name').innerText=item.name; document.getElementById('note-text-input').value=item.note||''; openModal('modal-note'); } }
+    function saveNote(){ const txt=document.getElementById('note-text-input').value; if(currentNoteIdx!==null&&cartNew[currentNoteIdx]){ cartNew[currentNoteIdx].note=txt; renderCart(); } closeModal('modal-note'); }
+
+    // Voice note mic
+    let noteRecognition=null;
+    function startVoiceNoteRecording(){ if(!('webkitSpeechRecognition'in window)){ showToast('❌ Nicht unterstützt'); return; } const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition; if(noteRecognition) try{ noteRecognition.stop(); }catch(e){} noteRecognition=new SpeechRecognition(); noteRecognition.lang='de-DE'; noteRecognition.continuous=false; noteRecognition.interimResults=false; noteRecognition.onstart=()=>{ const btn=document.getElementById('note-mic-btn'); if(btn){ btn.innerHTML='🔴'; btn.style.background='#ff0000'; } showToast('🎤 Sprechen...'); }; noteRecognition.onresult=(e)=>{ const transcript=e.results[0][0].transcript; const ta=document.getElementById('note-text-input'); if(ta) ta.value=ta.value?ta.value+' '+transcript:transcript; showToast('📝 Notiz hinzugefügt'); }; noteRecognition.onerror=()=>{ const btn=document.getElementById('note-mic-btn'); if(btn){ btn.innerHTML='🎤'; btn.style.background='#e74c3c'; } }; noteRecognition.onend=()=>{ const btn=document.getElementById('note-mic-btn'); if(btn){ btn.innerHTML='🎤'; btn.style.background='#e74c3c'; } }; try{ noteRecognition.start(); }catch(e){ showToast('❌ Mikrofon Fehler'); } }
+    document.getElementById('note-mic-btn')?.addEventListener('click',startVoiceNoteRecording);
+
+    // Voice search (original algorithm)
     function calculateLetterMatchScore(productName, spokenText) {
         const pName = productName.toLowerCase();
         const sText = spokenText.toLowerCase();
@@ -1688,71 +1066,24 @@
         let letterRatio = (matchedLetters / Math.max(pName.length, sText.length)) * 70;
         let wordBonus = 0;
         const pWords = pName.split(' ');
-        for (let word of pWords) {
-            if (word.length > 2 && sText.includes(word)) {
-                wordBonus += 15;
-            }
-        }
-        let firstLetterBonus = 0;
-        if (pName.charAt(0) === sText.charAt(0)) {
-            firstLetterBonus = 5;
-        }
-        let finalScore = Math.min(89, Math.round(letterRatio + wordBonus + firstLetterBonus));
-        return finalScore;
+        for (let word of pWords) if (word.length > 2 && sText.includes(word)) wordBonus += 15;
+        let firstLetterBonus = (pName.charAt(0) === sText.charAt(0)) ? 5 : 0;
+        return Math.min(89, Math.round(letterRatio + wordBonus + firstLetterBonus));
     }
-
     function findBestMatchingProduct(spokenText) {
         let matches = [];
         for (let p of products) {
             let score = calculateLetterMatchScore(p.name, spokenText);
             matches.push({ product: p, score: score, nameLength: p.name.length });
         }
-        matches.sort((a, b) => {
-            if (a.score !== b.score) return b.score - a.score;
-            return b.nameLength - a.nameLength;
-        });
-        console.log("=== Voice Search ===");
-        console.log("Spoken:", spokenText);
-        console.log("Top 3 matches:");
-        matches.slice(0, 3).forEach(m => {
-            console.log(`  ${m.product.name}: ${m.score}%`);
-        });
-        if (matches.length > 0 && matches[0].score >= 40) {
-            return { product: matches[0].product, score: matches[0].score };
-        }
+        matches.sort((a,b)=> b.score - a.score || b.nameLength - a.nameLength);
+        if (matches.length && matches[0].score >= 40) return { product: matches[0].product, score: matches[0].score };
         return null;
     }
-
     function showVoiceModal() {
         const existing = document.querySelector('.voice-modal');
         if (existing) existing.remove();
-        const modalHtml = `
-            <div class="voice-modal">
-                <div class="voice-content">
-                    <div class="voice-search-box">
-                        <input type="text" id="voice-search-input" placeholder="Sagen Sie den Namen des Gerichts..." autocomplete="off">
-                        <button id="voice-search-mic" class="voice-mic-small">🎤</button>
-                    </div>
-                    <div id="voice-result-container">
-                        <div class="voice-result">
-                            <h3>🎤 Sprechen Sie jetzt...</h3>
-                            <div class="similarity">Drücken Sie auf das Mikrofon und sagen Sie den Namen</div>
-                        </div>
-                    </div>
-                    <div class="voice-note-box">
-                        <label>📝 Notiz (optional):</label>
-                        <div class="voice-note-input">
-                            <input type="text" id="voice-note-input" placeholder="z.B. ohne Zwiebeln, extra Käse...">
-                            <button id="voice-note-mic" class="voice-note-mic">🎤</button>
-                        </div>
-                    </div>
-                    <div class="voice-actions">
-                        <button id="voice-add-btn" class="btn-add" disabled>➕ Zum Warenkorb hinzufügen</button>
-                        <button id="voice-close-btn" class="btn-close">❌ Schließen</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        const modalHtml = `<div class="voice-modal"><div class="voice-content"><div class="voice-search-box"><input id="voice-search-input" placeholder="Sagen Sie den Namen des Gerichts..."><button id="voice-search-mic" class="voice-mic-small">🎤</button></div><div id="voice-result-container"><div class="voice-result"><h3>🎤 Sprechen Sie jetzt...</h3><div class="similarity">Drücken Sie auf das Mikrofon</div></div></div><div class="voice-note-box"><label>📝 Notiz (optional):</label><div class="voice-note-input"><input id="voice-note-input" placeholder="z.B. ohne Zwiebeln..."><button id="voice-note-mic" class="voice-note-mic">🎤</button></div></div><div class="voice-actions"><button id="voice-add-btn" class="btn-add" disabled>➕ Hinzufügen</button><button id="voice-close-btn" class="btn-close">❌ Schließen</button></div></div></div>`;
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         const searchInput = document.getElementById('voice-search-input');
         const searchMic = document.getElementById('voice-search-mic');
@@ -1761,223 +1092,99 @@
         const addBtn = document.getElementById('voice-add-btn');
         const closeBtn = document.getElementById('voice-close-btn');
         let currentBestProduct = null;
-        let currentScore = 0;
         function updateResult(product, score) {
             currentBestProduct = product;
-            currentScore = score;
             const container = document.getElementById('voice-result-container');
             if (product) {
-                container.innerHTML = `
-                    <div class="voice-result">
-                        <h3>✅ Beste Übereinstimmung</h3>
-                        <div class="product-name">${product.name}</div>
-                        <div class="price">${product.price.toFixed(2)} €</div>
-                        <div class="similarity">Ähnlichkeit: ${score}%</div>
-                    </div>
-                `;
+                container.innerHTML = `<div class="voice-result"><div class="product-name">${product.name}</div><div class="price">${product.price.toFixed(2)}€</div><div class="similarity">Ähnlichkeit: ${score}%</div></div>`;
                 addBtn.disabled = false;
             } else {
-                container.innerHTML = `
-                    <div class="voice-result">
-                        <h3>❌ Kein Produkt gefunden</h3>
-                        <div class="similarity">Versuchen Sie es mit einem anderen Namen</div>
-                    </div>
-                `;
+                container.innerHTML = `<div class="voice-result"><div>❌ Kein Produkt gefunden</div></div>`;
                 addBtn.disabled = true;
-                currentBestProduct = null;
             }
         }
         function searchFromText() {
             const text = searchInput.value.trim();
-            if (text === "") {
-                updateResult(null, 0);
-                return;
-            }
+            if (!text) { updateResult(null,0); return; }
             const match = findBestMatchingProduct(text);
-            if (match) {
-                updateResult(match.product, match.score);
-            } else {
-                updateResult(null, 0);
-            }
+            updateResult(match?.product || null, match?.score || 0);
         }
+        let voiceRecog = null;
         function startMainRecording() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showToast("❌ Sprachaufnahme wird nicht unterstützt");
-                return;
-            }
+            if (!('webkitSpeechRecognition' in window)) { showToast("❌ Nicht unterstützt"); return; }
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (mainRecognition) {
-                try { mainRecognition.stop(); } catch(e) {}
-            }
-            mainRecognition = new SpeechRecognition();
-            mainRecognition.lang = 'de-DE';
-            mainRecognition.continuous = false;
-            mainRecognition.interimResults = false;
-            mainRecognition.onstart = () => {
-                isMainRecording = true;
-                searchMic.innerHTML = "🔴";
-                searchMic.style.background = "#ff0000";
-                showToast("🎤 Höre zu...");
-            };
-            mainRecognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                searchInput.value = transcript;
-                searchFromText();
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-            };
-            mainRecognition.onerror = () => {
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-                showToast("❌ Fehler bei der Spracherkennung");
-            };
-            mainRecognition.onend = () => {
-                isMainRecording = false;
-                searchMic.innerHTML = "🎤";
-                searchMic.style.background = "#e74c3c";
-            };
-            try {
-                mainRecognition.start();
-            } catch(e) {
-                showToast("❌ Mikrofon konnte nicht gestartet werden");
-            }
+            if (voiceRecog) try { voiceRecog.stop(); } catch(e) {}
+            voiceRecog = new SpeechRecognition();
+            voiceRecog.lang = 'de-DE';
+            voiceRecog.continuous = false;
+            voiceRecog.interimResults = false;
+            voiceRecog.onstart = () => { searchMic.innerHTML = "🔴"; searchMic.style.background = "#ff0000"; showToast("🎤 Höre zu..."); };
+            voiceRecog.onresult = (e) => { searchInput.value = e.results[0][0].transcript; searchFromText(); searchMic.innerHTML = "🎤"; searchMic.style.background = "#e74c3c"; };
+            voiceRecog.onerror = () => { searchMic.innerHTML = "🎤"; searchMic.style.background = "#e74c3c"; };
+            voiceRecog.onend = () => { searchMic.innerHTML = "🎤"; searchMic.style.background = "#e74c3c"; };
+            try { voiceRecog.start(); } catch(e) { showToast("❌ Mikrofon Fehler"); }
         }
+        let noteRec = null;
         function startNoteRecording() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showToast("❌ Sprachaufnahme wird nicht unterstützt");
-                return;
-            }
+            if (!('webkitSpeechRecognition' in window)) return;
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const noteRec = new SpeechRecognition();
+            if (noteRec) try { noteRec.stop(); } catch(e) {}
+            noteRec = new SpeechRecognition();
             noteRec.lang = 'de-DE';
             noteRec.continuous = false;
             noteRec.interimResults = false;
-            noteRec.onstart = () => {
-                noteMic.innerHTML = "🔴";
-                noteMic.style.background = "#ff0000";
-                showToast("🎤 Notiz aufnehmen...");
-            };
-            noteRec.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const currentNote = noteInput.value;
-                noteInput.value = currentNote ? currentNote + " " + transcript : transcript;
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            noteRec.onerror = () => {
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            noteRec.onend = () => {
-                noteMic.innerHTML = "🎤";
-                noteMic.style.background = "#e74c3c";
-            };
-            try {
-                noteRec.start();
-            } catch(e) {}
-        }
-        function addToCartAndClose() {
-            if (currentBestProduct) {
-                const note = noteInput.value.trim();
-                cartNew.push({
-                    ...currentBestProduct,
-                    selectedExtras: [],
-                    note: note || "Keine Notiz",
-                    quantity: 1
-                });
-                renderCart();
-                showToast(`✅ ${currentBestProduct.name} wurde hinzugefügt`);
-                document.querySelector('.voice-modal').remove();
-            }
+            noteRec.onstart = () => { noteMic.innerHTML = "🔴"; noteMic.style.background = "#ff0000"; showToast("🎤 Notiz aufnehmen..."); };
+            noteRec.onresult = (e) => { const t = e.results[0][0].transcript; noteInput.value = noteInput.value ? noteInput.value + " " + t : t; noteMic.innerHTML = "🎤"; noteMic.style.background = "#e74c3c"; };
+            noteRec.onerror = () => { noteMic.innerHTML = "🎤"; noteMic.style.background = "#e74c3c"; };
+            noteRec.onend = () => { noteMic.innerHTML = "🎤"; noteMic.style.background = "#e74c3c"; };
+            try { noteRec.start(); } catch(e) {}
         }
         searchInput.addEventListener('input', searchFromText);
         searchMic.addEventListener('click', startMainRecording);
         noteMic.addEventListener('click', startNoteRecording);
-        addBtn.addEventListener('click', addToCartAndClose);
-        closeBtn.addEventListener('click', () => {
-            document.querySelector('.voice-modal').remove();
+        addBtn.addEventListener('click', () => {
+            if (currentBestProduct) {
+                cartNew.push({...currentBestProduct, tempId:Date.now()+Math.random(), selectedExtras:[], note: noteInput.value.trim() || "", quantity:1});
+                renderCart();
+                showToast(`✅ ${currentBestProduct.name} hinzugefügt`);
+                document.querySelector('.voice-modal').remove();
+            }
         });
+        closeBtn.addEventListener('click', () => document.querySelector('.voice-modal').remove());
         searchInput.focus();
     }
 
-    // ========== NOTE MIC FUNCTION (inside cart note modal) ==========
-    function initNoteMic() {
-        const noteMicBtn = document.getElementById('note-mic-btn');
-        if (!noteMicBtn) return;
-        let noteRecognition = null;
-        let isNoteRecording = false;
-        noteMicBtn.onclick = () => {
-            if (isNoteRecording) {
-                if (noteRecognition) noteRecognition.stop();
-                return;
-            }
-            if (!noteRecognition) {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) {
-                    showToast("❌ Sprachaufnahme nicht unterstützt");
-                    return;
-                }
-                noteRecognition = new SpeechRecognition();
-                noteRecognition.lang = 'de-DE';
-                noteRecognition.continuous = false;
-                noteRecognition.interimResults = false;
-                noteRecognition.onresult = (event) => {
-                    const transcript = event.results[0][0].transcript;
-                    const textarea = document.getElementById('note-text-input');
-                    const currentText = textarea.value;
-                    textarea.value = currentText ? currentText + " " + transcript : transcript;
-                    showToast("📝 Text hinzugefügt");
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-                noteRecognition.onerror = () => {
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-                noteRecognition.onend = () => {
-                    isNoteRecording = false;
-                    noteMicBtn.innerHTML = "🎤";
-                    noteMicBtn.style.background = "#e74c3c";
-                };
-            }
-            try {
-                noteRecognition.start();
-                isNoteRecording = true;
-                noteMicBtn.innerHTML = "🔴";
-                noteMicBtn.style.background = "#ff0000";
-                showToast("🎤 Sprechen Sie Ihre Notiz...");
-            } catch(e) {}
-        };
-    }
+    // Admin functions (simplified but full)
+    function showLoginModal(){ currentPin=''; updatePinDisplay(); openModal('modal-login'); }
+    function updatePinDisplay(){ document.getElementById('pin-display').textContent=currentPin.padStart(4,'•'); }
+    function addPinDigit(d){ if(currentPin.length<4){ currentPin+=d; updatePinDisplay(); } }
+    function clearPin(){ currentPin=''; updatePinDisplay(); }
+    function submitPin(){ if(currentPin==='1234'){ closeModal('modal-login'); openAdmin(); } else { showToast('Falscher PIN'); clearPin(); } }
+    function createPinPad(){ const pad=document.getElementById('pin-pad'); pad.innerHTML=''; for(let i=1;i<=9;i++){ const b=document.createElement('button'); b.className='pin-btn'; b.textContent=i; b.onclick=()=>addPinDigit(i.toString()); pad.appendChild(b); } const b0=document.createElement('button'); b0.className='pin-btn'; b0.textContent='0'; b0.onclick=()=>addPinDigit('0'); pad.appendChild(b0); const e=document.createElement('button'); e.className='pin-btn'; e.style.visibility='hidden'; pad.appendChild(e); }
+    function openAdmin(){ renderCats(); const filter=document.getElementById('admin-prod-filter'); if(filter) filter.innerHTML='<option value="all">Alle</option>'+categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''); switchAdminTab('categories'); renderCategoriesAdmin(); renderProductsAdmin(); renderExtrasAdmin(); renderZutatenAdmin(); openModal('modal-admin'); }
+    function switchAdminTab(tabId){ document.querySelectorAll('.admin-tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active')); document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`admin-${tabId}-section`).classList.add('active'); }
+    document.querySelectorAll('.admin-tab-btn').forEach(btn=>btn.addEventListener('click',()=>{ const tab=btn.getAttribute('data-tab'); switchAdminTab(tab); if(tab==='categories') renderCategoriesAdmin(); else if(tab==='products') renderProductsAdmin(); else if(tab==='extras') renderExtrasAdmin(); else if(tab==='zutaten') renderZutatenAdmin(); }));
+    function renderCategoriesAdmin(){ const cont=document.getElementById('admin-cat-list'); if(!cont)return; const sorted=[...categories].sort((a,b)=>(a.order||0)-(b.order||0)); cont.innerHTML=sorted.map(c=>`<div class="admin-item"><span>${c.name}</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('category',${c.id})">↑</button><button class="btn-down" onclick="moveDown('category',${c.id})">↓</button><button class="btn-edit" onclick="openEditModal('category',${c.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('category',${c.id})">X</button></div></div>`).join(''); }
+    function renderProductsAdmin(){ const cont=document.getElementById('admin-product-list'); if(!cont)return; const filter=document.getElementById('admin-prod-filter'); const catId=filter?filter.value:'all'; let filtered=catId==='all'?products:products.filter(p=>p.catId==catId); const sorted=[...filtered].sort((a,b)=>(a.order||0)-(b.order||0)); cont.innerHTML=sorted.map(p=>`<div class="admin-item"><div><strong>${p.name}</strong> ${p.price.toFixed(2)}€</div><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('product',${p.id})">↑</button><button class="btn-down" onclick="moveDown('product',${p.id})">↓</button><button class="btn-edit" onclick="openEditModal('product',${p.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('product',${p.id})">X</button></div></div>`).join(''); }
+    function renderExtrasAdmin(){ const cont=document.getElementById('admin-ex-list'); if(!cont)return; const sorted=[...extras].sort((a,b)=>(a.order||0)-(b.order||0)); cont.innerHTML=sorted.map(e=>`<div class="admin-item"><span>${e.name} (+${e.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('extra',${e.id})">↑</button><button class="btn-down" onclick="moveDown('extra',${e.id})">↓</button><button class="btn-edit" onclick="openEditModal('extra',${e.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('extra',${e.id})">X</button></div></div>`).join(''); }
+    function renderZutatenAdmin(){ const cont=document.getElementById('admin-zut-list'); if(!cont)return; const sorted=[...zutaten].sort((a,b)=>(a.order||0)-(b.order||0)); cont.innerHTML=sorted.map(z=>`<div class="admin-item"><span>${z.name} (+${z.price.toFixed(2)}€)</span><div class="admin-item-actions"><button class="btn-up" onclick="moveUp('zutat',${z.id})">↑</button><button class="btn-down" onclick="moveDown('zutat',${z.id})">↓</button><button class="btn-edit" onclick="openEditModal('zutat',${z.id})">Edit</button><button class="btn-delete" onclick="confirmDelete('zutat',${z.id})">X</button></div></div>`).join(''); }
+    function addCategory(){ const name=document.getElementById('new-cat-name').value.trim(); if(name){ const maxOrder=categories.reduce((m,c)=>Math.max(m,c.order||0),-1)+1; categories.push({id:Date.now(),name,order:maxOrder}); save(); renderCats(); renderCategoriesAdmin(); document.getElementById('new-cat-name').value=''; } }
+    function addProduct(){ const name=document.getElementById('p-name').value.trim(); const price=parseFloat(document.getElementById('p-price').value); const cat=parseInt(document.getElementById('p-cat-select').value); const img=document.getElementById('p-image').value.trim(); if(name&&!isNaN(price)&&price>=0){ const maxOrder=products.filter(p=>p.catId==cat).reduce((m,p)=>Math.max(m,p.order||0),-1)+1; products.push({id:Date.now(),catId:cat,name,price,order:maxOrder,imageUrl:img,description:'',recipeIngredients:'',recipeInstructions:''}); save(); renderProductsAdmin(); renderProds(cat); document.getElementById('p-name').value=''; document.getElementById('p-price').value=''; document.getElementById('p-image').value=''; } }
+    function addExtra(type){ let name,price; if(type==='extra'){ name=document.getElementById('ex-name').value.trim(); price=parseFloat(document.getElementById('ex-price').value); }else{ name=document.getElementById('zut-name').value.trim(); price=parseFloat(document.getElementById('zut-price').value); } if(name&&!isNaN(price)&&price>=0){ const arr=type==='extra'?extras:zutaten; const maxOrder=arr.reduce((m,e)=>Math.max(m,e.order||0),-1)+1; const newItem={id:Date.now(),name,price,order:maxOrder}; if(type==='extra'){ extras.push(newItem); renderExtrasAdmin(); document.getElementById('ex-name').value=''; document.getElementById('ex-price').value=''; }else{ zutaten.push(newItem); renderZutatenAdmin(); document.getElementById('zut-name').value=''; document.getElementById('zut-price').value=''; } save(); } }
+    async function moveUp(type,id){ let arr,getOrder,setOrder; if(type==='category'){ arr=categories; getOrder=c=>c.order; setOrder=(c,o)=>c.order=o; } else if(type==='product'){ arr=products; getOrder=p=>p.order; setOrder=(p,o)=>p.order=o; } else if(type==='extra'){ arr=extras; getOrder=e=>e.order; setOrder=(e,o)=>e.order=o; } else if(type==='zutat'){ arr=zutaten; getOrder=z=>z.order; setOrder=(z,o)=>z.order=o; } else return; const sorted=[...arr].sort((a,b)=>(getOrder(a)||0)-(getOrder(b)||0)); const idx=sorted.findIndex(i=>i.id===id); if(idx<=0) return; const temp=getOrder(sorted[idx]); setOrder(sorted[idx],getOrder(sorted[idx-1])); setOrder(sorted[idx-1],temp); const reSorted=[...arr].sort((a,b)=>(getOrder(a)||0)-(getOrder(b)||0)); reSorted.forEach((item,i)=>setOrder(item,i)); save(); if(type==='category'){ renderCategoriesAdmin(); renderCats(); } else if(type==='product'){ renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); } else if(type==='extra') renderExtrasAdmin(); else renderZutatenAdmin(); }
+    async function moveDown(type,id){ let arr,getOrder,setOrder; if(type==='category'){ arr=categories; getOrder=c=>c.order; setOrder=(c,o)=>c.order=o; } else if(type==='product'){ arr=products; getOrder=p=>p.order; setOrder=(p,o)=>p.order=o; } else if(type==='extra'){ arr=extras; getOrder=e=>e.order; setOrder=(e,o)=>e.order=o; } else if(type==='zutat'){ arr=zutaten; getOrder=z=>z.order; setOrder=(z,o)=>z.order=o; } else return; const sorted=[...arr].sort((a,b)=>(getOrder(a)||0)-(getOrder(b)||0)); const idx=sorted.findIndex(i=>i.id===id); if(idx>=sorted.length-1) return; const temp=getOrder(sorted[idx]); setOrder(sorted[idx],getOrder(sorted[idx+1])); setOrder(sorted[idx+1],temp); const reSorted=[...arr].sort((a,b)=>(getOrder(a)||0)-(getOrder(b)||0)); reSorted.forEach((item,i)=>setOrder(item,i)); save(); if(type==='category'){ renderCategoriesAdmin(); renderCats(); } else if(type==='product'){ renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); } else if(type==='extra') renderExtrasAdmin(); else renderZutatenAdmin(); }
+    function openEditModal(type,id){ editContext={type,id}; let item=null; if(type==='category') item=categories.find(c=>c.id===id); else if(type==='product') item=products.find(p=>p.id===id); else if(type==='extra') item=extras.find(e=>e.id===id); else if(type==='zutat') item=zutaten.find(z=>z.id===id); if(!item)return; document.getElementById('edit-title').innerText=type==='category'?'Kategorie bearbeiten':(type==='product'?'Produkt bearbeiten':(type==='extra'?'Extra bearbeiten':'Zutat bearbeiten')); document.getElementById('edit-input').value=item.name; const priceInp=document.getElementById('edit-price'); const imgInp=document.getElementById('edit-image'); const descInp=document.getElementById('edit-description'); const ingInp=document.getElementById('edit-recipe-ingredients'); const insInp=document.getElementById('edit-recipe-instructions'); priceInp.style.display='none'; imgInp.style.display='none'; descInp.style.display='none'; ingInp.style.display='none'; insInp.style.display='none'; if(type==='product'){ priceInp.style.display='block'; priceInp.value=item.price; imgInp.style.display='block'; imgInp.value=item.imageUrl||''; descInp.style.display='block'; descInp.value=item.description||''; ingInp.style.display='block'; ingInp.value=item.recipeIngredients||''; insInp.style.display='block'; insInp.value=item.recipeInstructions||''; } else if(type==='extra'||type==='zutat'){ priceInp.style.display='block'; priceInp.value=item.price; } openModal('modal-edit'); }
+    function saveEdit(){ const newName=document.getElementById('edit-input').value.trim(); if(!newName) return alert('Name leer'); const type=editContext.type, id=editContext.id; if(type==='category'){ const cat=categories.find(c=>c.id===id); if(cat){ cat.name=newName; save(); renderCats(); renderCategoriesAdmin(); } } else if(type==='product'){ const newPrice=parseFloat(document.getElementById('edit-price').value); if(isNaN(newPrice)) return alert('Preis ungültig'); const newImg=document.getElementById('edit-image').value.trim(); const newDesc=document.getElementById('edit-description').value; const newIng=document.getElementById('edit-recipe-ingredients').value; const newIns=document.getElementById('edit-recipe-instructions').value; const prod=products.find(p=>p.id===id); if(prod){ prod.name=newName; prod.price=newPrice; prod.imageUrl=newImg; prod.description=newDesc; prod.recipeIngredients=newIng; prod.recipeInstructions=newIns; save(); cartNew=cartNew.map(i=>i.id===prod.id?{...i,name:prod.name,price:prod.price,imageUrl:prod.imageUrl,description:prod.description}:i); cartLocked=cartLocked.map(i=>i.id===prod.id?{...i,name:prod.name,price:prod.price,imageUrl:prod.imageUrl,description:prod.description}:i); renderCart(); renderProductsAdmin(); if(prod.catId) renderProds(prod.catId); } } else if(type==='extra'){ const newPrice=parseFloat(document.getElementById('edit-price').value); if(isNaN(newPrice)) return; const extra=extras.find(e=>e.id===id); if(extra){ extra.name=newName; extra.price=newPrice; save(); renderExtrasAdmin(); } } else if(type==='zutat'){ const newPrice=parseFloat(document.getElementById('edit-price').value); if(isNaN(newPrice)) return; const zut=zutaten.find(z=>z.id===id); if(zut){ zut.name=newName; zut.price=newPrice; save(); renderZutatenAdmin(); } } closeModal('modal-edit'); }
+    function confirmDelete(type,id){ let msg=''; if(type==='category') msg='Kategorie löschen?'; else if(type==='product') msg='Produkt löschen?'; else if(type==='extra') msg='Extra löschen?'; else msg='Zutat löschen?'; showConfirm(msg,()=>{ if(type==='category'){ categories=categories.filter(c=>c.id!==id); save(); renderCats(); renderCategoriesAdmin(); } else if(type==='product'){ products=products.filter(p=>p.id!==id); save(); renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); } else if(type==='extra'){ extras=extras.filter(e=>e.id!==id); save(); renderExtrasAdmin(); } else{ zutaten=zutaten.filter(z=>z.id!==id); save(); renderZutatenAdmin(); } }); }
+    function openKitchen(){ openModal('modal-kitchen'); const container=document.getElementById('kitchen-content'); container.innerHTML='<h2 style="color:white">Lade...</h2>'; db.ref('active_orders').on('value',snap=>{ const data=snap.val(); if(!data){ container.innerHTML='<h1 style="color:white">KEINE BESTELLUNGEN</h1>'; return; } let orders=[]; Object.entries(data).forEach(([tNum,batches])=>{ Object.entries(batches).forEach(([bId,batch])=>{ orders.push({tableNum:tNum,batchId:bId,time:batch.time||'',timestamp:batch.batchId||0,items:batch.items||[],isLate:(Date.now()-(batch.batchId||0))>300000}); }); }); orders.sort((a,b)=>b.timestamp-a.timestamp); let html=''; orders.forEach(o=>{ html+=`<div class="kitchen-order-card ${o.isLate?'late-blink':''}"><div class="card-header-pos"><b>${o.tableNum==='takeaway'?'🥡 TAKEAWAY':'TISCH '+o.tableNum}</b><b>🕒 ${o.time||''}</b></div><div>${o.items.map(i=>`<div><b>${i.name}</b> x${i.quantity||1} ${i.selectedExtras?.map(e=>e.name).join(',')||''} ${i.note?`<span style="color:red">📝${i.note}</span>`:''}</div>`).join('')}</div><button class="btn-main" style="background:green" onclick="finishOrder('${o.tableNum}','${o.batchId}')">FERTIG</button></div>`; }); container.innerHTML=html||'<h1 style="color:white">Keine</h1>'; }); }
+    function finishOrder(tNum,bId){ db.ref('active_orders/'+tNum+'/'+bId).remove(); }
+    function showConfirm(msg,cb){ document.getElementById('confirm-message').innerText=msg; confirmCallback=cb; openModal('modal-confirm'); }
+    function executeConfirm(){ if(confirmCallback){ confirmCallback(); confirmCallback=null; } closeModal('modal-confirm'); }
 
-    // ========== CONFIRM ==========
-    function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
-    function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
-
-    // ========== INIT ==========
-    function init() { 
-        ensureOrders(); 
-        renderCats(); 
-        if (categories.length > 0) renderProds(categories[0].id); 
-        renderCart(); 
-        createTableGrid(); 
-        createPinPad(); 
-        loadFromFirebase(); 
-        initNoteMic();
-        const fabMic = document.getElementById('fab-mic');
-        if (fabMic) fabMic.onclick = showVoiceModal;
-    }
+    // Initialization
+    function init(){ ensureOrders(); renderCats(); if(categories.length) renderProds(categories[0].id); renderCart(); createTableGrid(); createPinPad(); loadFromFirebase(); const fab=document.getElementById('fab-mic'); if(fab) fab.onclick=showVoiceModal; }
     init();
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').then(registration => { console.log('ServiceWorker registriert:', registration.scope); }).catch(error => { console.log('ServiceWorker Registrierung fehlgeschlagen:', error); });
-        });
-    }
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(e=>console.log(e)); }); }
 </script>
 </body>
 </html>
