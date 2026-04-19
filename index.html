@@ -1341,10 +1341,8 @@
         try {
             await db.ref('active_orders/' + tNum).push(newBatch);
             await db.ref('notifications/kitchen').set({ timestamp: Date.now() });
-            // Nach dem Senden: Die gesendeten Artikel zu cartLocked hinzufügen (damit sie als "bereits bestellt" angezeigt werden)
-            cartLocked.push(...cartNew.map(item => ({ ...item })));
-            cartNew = [];
-            renderCart();
+            // LEERE DIE GESAMTE SALE NACH DEM SENDEN
+            resetCart(); // <-- HIER: cartNew, cartLocked, activeTable werden zurückgesetzt
             showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet. Bestellnummer: ${orderNumber}`);
             closeModal('modal-table-grid');
         } catch(e) { 
@@ -1695,8 +1693,8 @@
         }); 
     }
     function finishOrder(tNum, bId) { 
+        // Löscht nur den spezifischen Batch, nicht die gesamte Tabelle
         db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e));
-        // Der Tisch bleibt erhalten, nur dieser Batch wird gelöscht
     }
 
     // ========== VOICE RECOGNITION (ORIGINAL ALGORITHM) ==========
