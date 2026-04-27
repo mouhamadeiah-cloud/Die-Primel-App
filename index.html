@@ -39,7 +39,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             flex-shrink: 0;
         }
-        header h2 { font-size: clamp(1.2rem, 4vw, 2rem); margin: 0; }
+        header h2 { font-size: clamp(1.2rem, 4vw, 2rem); margin: 0; cursor: pointer; }
         header button { 
             font-size: clamp(0.8rem, 2.5vw, 1rem); 
             padding: 0.5rem 1rem; 
@@ -734,6 +734,56 @@
         .btn-close { background: var(--red); color: white; }
 
         @media (orientation: landscape) { header { height: 15vh; } }
+
+        /* ---------- NEUE STYLES FÜR PREISVERSTECKUNG ---------- */
+        /* Standardmäßig: Preise unsichtbar, TISCHE-Button immer sichtbar, ADMIN-Button unsichtbar */
+        .btn-admin {
+            display: none !important;
+        }
+        /* Preise und Preiselemente unsichtbar machen (Textfarbe transparent) */
+        .prod-price,
+        .cart-item-unit-price,
+        .cart-item-total-price,
+        .cart-total-bar,
+        .extra-price,
+        #extras-grid .card span:last-child,
+        #extras-grid .card br + span,
+        .price-hidden {
+            color: transparent !important;
+            background-color: transparent !important;
+        }
+        /* Wenn die Klasse 'prices-visible' auf dem Body liegt, werden Preise und Admin-Button sichtbar */
+        body.prices-visible .prod-price,
+        body.prices-visible .cart-item-unit-price,
+        body.prices-visible .cart-item-total-price,
+        body.prices-visible .cart-total-bar,
+        body.prices-visible .extra-price,
+        body.prices-visible #extras-grid .card span:last-child,
+        body.prices-visible #extras-grid .card br + span,
+        body.prices-visible .price-hidden {
+            color: inherit !important;
+            background-color: inherit !important;
+        }
+        body.prices-visible .btn-admin {
+            display: inline-block !important;
+        }
+        /* TISCHE-Button immer sichtbar */
+        .btn-tables {
+            display: inline-block !important;
+        }
+        /* Countdown-Anzeige */
+        .countdown-display {
+            display: none;
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        body.prices-visible .countdown-display {
+            display: inline-block;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -744,12 +794,12 @@
 
 <header>
     <button onclick="openKitchen()">KÜCHE</button>
-    <h2>DIE PRIMEL</h2>
+    <h2 id="logo-title" ondblclick="togglePricesVisibility()">DIE PRIMEL <span id="countdown-display" class="countdown-display"></span></h2>
     <div>
-        <button onclick="openTables()">TISCHE</button>
-        <button onclick="showLoginModal()">ADMIN</button>
-        <button onclick="openCustomerPage()">KUNDEN</button>
-        <button style="background:#ff5722;" onclick="callWaiter()">🔔 RUF</button>
+        <button class="btn-tables" onclick="openTables()">TISCHE</button>
+        <button class="btn-admin" onclick="showLoginModal()">ADMIN</button>
+        <button class="btn-customer" onclick="openCustomerPage()">KUNDEN</button>
+        <button class="btn-waiter" style="background:#ff5722;" onclick="callWaiter()">🔔 RUF</button>
     </div>
 </header>
 
@@ -966,6 +1016,87 @@
 </div>
 
 <script>
+    // ========== PREIS-SICHTBARKEIT TIMER ==========
+    let priceVisibilityTimer = null;
+    const PRICE_VISIBILITY_DURATION = 2 * 60 * 1000; // 2 Minuten in Millisekunden
+    
+    function updateCountdownDisplay() {
+        const display = document.getElementById('countdown-display');
+        if (!display) return;
+        if (!document.body.classList.contains('prices-visible')) {
+            display.textContent = '';
+            return;
+        }
+        // Berechne verbleibende Zeit
+        const remaining = priceVisibilityTimer ? 
+            Math.ceil((window._priceTimerEnd - Date.now()) / 1000) : 0;
+        if (remaining <= 0) {
+            display.textContent = '';
+            return;
+        }
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // ========== FUNKTION ZUM UMSCHALTEN DER PREIS-SICHTBARKEIT (Double-Click auf Logo) ==========
+    function togglePricesVisibility() {
+        // Wenn bereits sichtbar, dann verstecken und Timer löschen
+        if (document.body.classList.contains('prices-visible')) {
+            hidePrices();
+            return;
+        }
+        
+        // Preise anzeigen
+        showPrices();
+    }
+    
+    function showPrices() {
+        document.body.classList.add('prices-visible');
+        
+        // Timer zurücksetzen falls vorhanden
+        if (priceVisibilityTimer) {
+            clearTimeout(priceVisibilityTimer);
+            if (window._countdownInterval) {
+                clearInterval(window._countdownInterval);
+            }
+        }
+        
+        // Endzeit speichern
+        window._priceTimerEnd = Date.now() + PRICE_VISIBILITY_DURATION;
+        
+        // Countdown starten
+        updateCountdownDisplay();
+        window._countdownInterval = setInterval(() => {
+            updateCountdownDisplay();
+            if (Date.now() >= window._priceTimerEnd) {
+                clearInterval(window._countdownInterval);
+            }
+        }, 1000);
+        
+        // Timer für automatisches Verstecken nach 2 Minuten
+        priceVisibilityTimer = setTimeout(() => {
+            hidePrices();
+            showToast("Preise wurden automatisch versteckt (2 Minuten abgelaufen)");
+        }, PRICE_VISIBILITY_DURATION);
+        
+        showToast("Preise und Admin-Button für 2 Minuten sichtbar");
+    }
+    
+    function hidePrices() {
+        document.body.classList.remove('prices-visible');
+        if (priceVisibilityTimer) {
+            clearTimeout(priceVisibilityTimer);
+            priceVisibilityTimer = null;
+        }
+        if (window._countdownInterval) {
+            clearInterval(window._countdownInterval);
+            window._countdownInterval = null;
+        }
+        const display = document.getElementById('countdown-display');
+        if (display) display.textContent = '';
+    }
+
     // ========== FIREBASE CONFIG ==========
     const firebaseConfig = {
         apiKey: "AIzaSyCjHwRY3J7KHr4DaX15mWfXvrGUleJk32Q",
@@ -1267,13 +1398,14 @@
                     let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
                     let qty = item.quantity || 1;
                     total += itemPrice * qty;
-                    itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span>${(itemPrice * qty).toFixed(2)}€</span></div>`;
+                    itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span class="price-hidden">${(itemPrice * qty).toFixed(2)}€</span></div>`;
                     if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`;
                 });
             }
         });
         document.getElementById('show-order-items').innerHTML = itemsHtml;
         document.getElementById('show-order-total').innerText = total.toFixed(2) + ' €';
+        document.getElementById('show-order-total').className = 'order-total price-hidden';
         document.getElementById('show-order-title').innerText = tableId === 'takeaway' ? '🥡 Takeaway' : `Tisch ${tableId}`;
         currentShowTable = tableId;
         openModal('modal-show-order');
@@ -1341,8 +1473,7 @@
         try {
             await db.ref('active_orders/' + tNum).push(newBatch);
             await db.ref('notifications/kitchen').set({ timestamp: Date.now() });
-            // LEERE DIE GESAMTE SALE NACH DEM SENDEN
-            resetCart(); // <-- HIER: cartNew, cartLocked, activeTable werden zurückgesetzt
+            resetCart(); // <-- LEERE DIE GESAMTE SALE NACH DEM SENDEN
             showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet. Bestellnummer: ${orderNumber}`);
             closeModal('modal-table-grid');
         } catch(e) { 
