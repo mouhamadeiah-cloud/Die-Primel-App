@@ -1018,7 +1018,7 @@
 <script>
     // ========== PREIS-SICHTBARKEIT TIMER ==========
     let priceVisibilityTimer = null;
-    const PRICE_VISIBILITY_DURATION = 2 * 60 * 1000; // 2 Minuten in Millisekunden
+    const PRICE_VISIBILITY_DURATION = 1 * 60 * 1000; // 1 Minute in Millisekunden
     
     function updateCountdownDisplay() {
         const display = document.getElementById('countdown-display');
@@ -1074,13 +1074,13 @@
             }
         }, 1000);
         
-        // Timer für automatisches Verstecken nach 2 Minuten
+        // Timer für automatisches Verstecken nach 1 Minute
         priceVisibilityTimer = setTimeout(() => {
             hidePrices();
-            showToast("Preise wurden automatisch versteckt (2 Minuten abgelaufen)");
+            showToast("Preise wurden automatisch versteckt (1 Minute abgelaufen)");
         }, PRICE_VISIBILITY_DURATION);
         
-        showToast("Preise und Admin-Button für 2 Minuten sichtbar");
+        showToast("Preise und Admin-Button für 1 Minute sichtbar");
     }
     
     function hidePrices() {
