@@ -25,6 +25,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
     <title>Die Primel Orderapp - V4 Professional</title>
     <style>
+        /* [جميع الأنماط كما هي، لم تتغير] */
         :root {
             --green: #27ae60; --blue: #2980b9; --orange: #f39c12;
             --red: #c0392b; --dark: #2c3e50; --gray: #95a5a6; --light: #ecf0f1;
@@ -394,6 +395,14 @@
             transform: scale(1.02);
             transition: all 0.3s ease;
         }
+        .completed-badge {
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+        }
 
         #modal-admin .modal-content {
             width: 100% !important;
@@ -735,12 +744,10 @@
 
         @media (orientation: landscape) { header { height: 15vh; } }
 
-        /* ---------- NEUE STYLES FÜR PREISVERSTECKUNG ---------- */
-        /* Standardmäßig: Preise unsichtbar, TISCHE-Button immer sichtbar, ADMIN-Button unsichtbar */
+        /* Preisversteckung */
         .btn-admin {
             display: none !important;
         }
-        /* Preise und Preiselemente unsichtbar machen (Textfarbe transparent) */
         .prod-price,
         .cart-item-unit-price,
         .cart-item-total-price,
@@ -752,7 +759,6 @@
             color: transparent !important;
             background-color: transparent !important;
         }
-        /* Wenn die Klasse 'prices-visible' auf dem Body liegt, werden Preise und Admin-Button sichtbar */
         body.prices-visible .prod-price,
         body.prices-visible .cart-item-unit-price,
         body.prices-visible .cart-item-total-price,
@@ -767,11 +773,9 @@
         body.prices-visible .btn-admin {
             display: inline-block !important;
         }
-        /* TISCHE-Button immer sichtbar */
         .btn-tables {
             display: inline-block !important;
         }
-        /* Countdown-Anzeige */
         .countdown-display {
             display: none;
             font-size: 0.7rem;
@@ -1016,9 +1020,8 @@
 </div>
 
 <script>
-    // ========== PREIS-SICHTBARKEIT TIMER ==========
     let priceVisibilityTimer = null;
-    const PRICE_VISIBILITY_DURATION = 1 * 60 * 1000; // 1 Minute in Millisekunden
+    const PRICE_VISIBILITY_DURATION = 1 * 60 * 1000;
     
     function updateCountdownDisplay() {
         const display = document.getElementById('countdown-display');
@@ -1027,7 +1030,6 @@
             display.textContent = '';
             return;
         }
-        // Berechne verbleibende Zeit
         const remaining = priceVisibilityTimer ? 
             Math.ceil((window._priceTimerEnd - Date.now()) / 1000) : 0;
         if (remaining <= 0) {
@@ -1039,33 +1041,23 @@
         display.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // ========== FUNKTION ZUM UMSCHALTEN DER PREIS-SICHTBARKEIT (Double-Click auf Logo) ==========
     function togglePricesVisibility() {
-        // Wenn bereits sichtbar, dann verstecken und Timer löschen
         if (document.body.classList.contains('prices-visible')) {
             hidePrices();
             return;
         }
-        
-        // Preise anzeigen
         showPrices();
     }
     
     function showPrices() {
         document.body.classList.add('prices-visible');
-        
-        // Timer zurücksetzen falls vorhanden
         if (priceVisibilityTimer) {
             clearTimeout(priceVisibilityTimer);
             if (window._countdownInterval) {
                 clearInterval(window._countdownInterval);
             }
         }
-        
-        // Endzeit speichern
         window._priceTimerEnd = Date.now() + PRICE_VISIBILITY_DURATION;
-        
-        // Countdown starten
         updateCountdownDisplay();
         window._countdownInterval = setInterval(() => {
             updateCountdownDisplay();
@@ -1073,13 +1065,10 @@
                 clearInterval(window._countdownInterval);
             }
         }, 1000);
-        
-        // Timer für automatisches Verstecken nach 1 Minute
         priceVisibilityTimer = setTimeout(() => {
             hidePrices();
             showToast("Preise wurden automatisch versteckt (1 Minute abgelaufen)");
         }, PRICE_VISIBILITY_DURATION);
-        
         showToast("Preise und Admin-Button für 1 Minute sichtbar");
     }
     
@@ -1097,7 +1086,6 @@
         if (display) display.textContent = '';
     }
 
-    // ========== FIREBASE CONFIG ==========
     const firebaseConfig = {
         apiKey: "AIzaSyCjHwRY3J7KHr4DaX15mWfXvrGUleJk32Q",
         authDomain: "primelpos.firebaseapp.com",
@@ -1120,7 +1108,6 @@
     db.ref('notifications/waiter').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(WAITER_SOUND_URL); });
     db.ref('notifications/kitchen').on('value', (snapshot) => { const val = snapshot.val(); if (val && val.timestamp) playSound(KITCHEN_SOUND_URL); });
 
-    // ========== DATA (no sales, no orders array - only active_orders) ==========
     let categories = JSON.parse(localStorage.getItem('cats')) || [];
     let products = JSON.parse(localStorage.getItem('prods')) || [];
     let extras = JSON.parse(localStorage.getItem('extras')) || [];
@@ -1137,7 +1124,6 @@
     let currentShowTable = null;
     let currentPin = '';
 
-    // ========== HELPER ==========
     function ensureOrders() {
         categories = categories.map((item, index) => { if (item.order === undefined) item.order = index; return item; });
         products = products.map((item, index) => { 
@@ -1177,7 +1163,6 @@
     function switchAdminTab(tabId) { document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active')); document.querySelectorAll('.admin-section').forEach(section => section.classList.remove('active')); document.querySelector(`.admin-tab-btn[data-tab="${tabId}"]`).classList.add('active'); document.getElementById(`admin-${tabId}-section`).classList.add('active'); }
     document.querySelectorAll('.admin-tab-btn').forEach(btn => { btn.addEventListener('click', () => { const tabId = btn.getAttribute('data-tab'); switchAdminTab(tabId); if (tabId === 'categories') renderCategoriesAdmin(); else if (tabId === 'products') renderProductsAdmin(); else if (tabId === 'extras') renderExtrasAdmin(); else if (tabId === 'zutaten') renderZutatenAdmin(); }); });
 
-    // ========== LOAD DATA FROM FIREBASE ==========
     function loadFromFirebase() { 
         db.ref('data').once('value', (snapshot) => { 
             const data = snapshot.val(); 
@@ -1201,7 +1186,6 @@
         saveToFirebase(); 
     }
 
-    // ========== RENDER CATEGORIES & PRODUCTS ==========
     function renderCats() { 
         const grid = document.getElementById('cat-grid'); 
         if (!grid) return; 
@@ -1233,7 +1217,6 @@
         openModal('modal-recipe-view'); 
     }
 
-    // ========== CART FUNCTIONS ==========
     function renderCart() { 
         const list = document.getElementById('cart-list'); 
         if (!list) return; 
@@ -1294,7 +1277,6 @@
     }
     function resetCart() { cartNew=[]; cartLocked=[]; activeTable=null; renderCart(); }
 
-    // ========== TABLE HANDLING (Zufügen statt Pay) ==========
     function openTables() { 
         updateTablesGrid(); 
         openModal('modal-tables'); 
@@ -1398,7 +1380,8 @@
                     let itemPrice = item.price + (item.selectedExtras ? item.selectedExtras.reduce((s,e) => s + e.price, 0) : 0);
                     let qty = item.quantity || 1;
                     total += itemPrice * qty;
-                    itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span class="price-hidden">${(itemPrice * qty).toFixed(2)}€</span></div>`;
+                    const completedBadge = batch.status === 'completed' ? '<span class="completed-badge">✔ Fertig</span>' : '';
+                    itemsHtml += `<div class="order-item-row"><span>${item.name} x${qty} ${completedBadge} ${item.selectedExtras && item.selectedExtras.length ? '(' + item.selectedExtras.map(e=>e.name).join(', ') + ')' : ''}</span><span class="price-hidden">${(itemPrice * qty).toFixed(2)}€</span></div>`;
                     if (item.note) itemsHtml += `<div style="color:red; font-size:0.9rem; padding-left:20px;">📝 ${item.note}</div>`;
                 });
             }
@@ -1432,7 +1415,6 @@
         });
     }
 
-    // ========== SEND ORDER (nur neue Artikel) mit täglich fortlaufender Nummer ==========
     async function getNextOrderNumber() {
         const today = new Date().toISOString().slice(0,10);
         const counterRef = db.ref('orderCounter');
@@ -1467,13 +1449,13 @@
             time: new Date().toLocaleTimeString(), 
             date: new Date().toLocaleDateString(), 
             items: [...cartNew], 
-            status: 'new',
+            status: 'new',   // Status 'new' für die Küche
             orderNumber: orderNumber
         }; 
         try {
             await db.ref('active_orders/' + tNum).push(newBatch);
             await db.ref('notifications/kitchen').set({ timestamp: Date.now() });
-            resetCart(); // <-- LEERE DIE GESAMTE SALE NACH DEM SENDEN
+            resetCart();
             showToast(`Bestellung für ${tNum==='takeaway'? 'Takeaway' : 'Tisch '+tNum} gesendet. Bestellnummer: ${orderNumber}`);
             closeModal('modal-table-grid');
         } catch(e) { 
@@ -1522,7 +1504,6 @@
         }); 
     }
 
-    // ========== EXTRAS, NOTES ==========
     function addNote(idx) { 
         currentNoteIdx = idx; 
         const item = cartNew[idx]; 
@@ -1564,7 +1545,6 @@
         closeModal('modal-extras'); 
     }
 
-    // ========== ADMIN CATEGORIES ==========
     function renderCategoriesAdmin() { 
         const cont = document.getElementById('admin-cat-list'); 
         if (!cont) return; 
@@ -1583,7 +1563,6 @@
         } 
     }
 
-    // ========== ADMIN PRODUCTS mit Bild und Beschreibung, und reparierte Pfeile ==========
     function renderProductsAdmin() { 
         const cont = document.getElementById('admin-product-list'); 
         if (!cont) return; 
@@ -1613,7 +1592,6 @@
         } else alert("Bitte Name und Preis eingeben"); 
     }
 
-    // ========== ADMIN EXTRAS & ZUTATEN ==========
     function renderExtrasAdmin() { 
         const cont = document.getElementById('admin-ex-list'); 
         if (!cont) return; 
@@ -1640,7 +1618,6 @@
         } else alert("Bitte gültige Daten!"); 
     }
 
-    // ========== MOVE UP/DOWN (fixed reorder - funktioniert jetzt für jede Kategorie separat) ==========
     async function moveUp(type, id) {
         let arr, getOrder, setOrder;
         if (type === 'category') { arr = categories; getOrder = c => c.order; setOrder = (c, o) => c.order = o; }
@@ -1648,7 +1625,6 @@
         else if (type === 'extra') { arr = extras; getOrder = e => e.order; setOrder = (e, o) => e.order = o; }
         else if (type === 'zutat') { arr = zutaten; getOrder = z => z.order; setOrder = (z, o) => z.order = o; }
         else return;
-        // Für Produkte: nur innerhalb derselben Kategorie sortieren
         let filteredArr = arr;
         if (type === 'product') {
             const prod = products.find(p => p.id === id);
@@ -1658,16 +1634,13 @@
         const sorted = [...filteredArr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
         const index = sorted.findIndex(item => item.id === id);
         if (index <= 0) return;
-        // swap orders
         const currentOrder = getOrder(sorted[index]);
         const prevOrder = getOrder(sorted[index-1]);
         setOrder(sorted[index], prevOrder);
         setOrder(sorted[index-1], currentOrder);
-        // re-sort and reassign sequential orders to avoid gaps
         const reSorted = [...filteredArr].sort((a,b) => (getOrder(a)||0) - (getOrder(b)||0));
         reSorted.forEach((item, idx) => setOrder(item, idx));
         save();
-        // refresh views
         if (type === 'category') { renderCategoriesAdmin(); renderCats(); }
         else if (type === 'product') { renderProductsAdmin(); if(categories[0]) renderProds(categories[0].id); }
         else if (type === 'extra') renderExtrasAdmin();
@@ -1702,7 +1675,6 @@
         else if (type === 'zutat') renderZutatenAdmin();
     }
 
-    // ========== EDIT MODAL (using data from array) ==========
     function openEditModal(type, id) {
         editContext = { type, id };
         let item = null;
@@ -1718,7 +1690,6 @@
         const descInput = document.getElementById('edit-description');
         const ingredientsInput = document.getElementById('edit-recipe-ingredients');
         const instructionsInput = document.getElementById('edit-recipe-instructions');
-        // reset visibility
         priceInput.style.display = 'none';
         imageInput.style.display = 'none';
         descInput.style.display = 'none';
@@ -1765,7 +1736,6 @@
                 prod.recipeIngredients = newIngredients;
                 prod.recipeInstructions = newInstructions;
                 save();
-                // update cart items if present
                 cartNew = cartNew.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, imageUrl:prod.imageUrl, description:prod.description} : item);
                 cartLocked = cartLocked.map(item => (item.id === prod.id) ? {...item, name:prod.name, price:prod.price, imageUrl:prod.imageUrl, description:prod.description} : item);
                 renderCart();
@@ -1800,7 +1770,7 @@
         });
     }
 
-    // ========== KITCHEN (FERTIG löscht nur den Batch, nicht den Tisch) ==========
+    // ========== KITCHEN: Nur neue Bestellungen anzeigen (status !== 'completed') ==========
     function openKitchen() { 
         openModal('modal-kitchen'); 
         const container = document.getElementById('kitchen-content'); 
@@ -1811,7 +1781,10 @@
             let allOrders = []; 
             Object.entries(allData).forEach(([tNum, batches]) => { 
                 Object.entries(batches).forEach(([bId, batch]) => { 
-                    allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000, orderNumber: batch.orderNumber || '' }); 
+                    // Nur anzeigen wenn Status nicht 'completed' ist (also 'new' oder undefined für alte Daten)
+                    if (batch.status !== 'completed') {
+                        allOrders.push({ tableNum: tNum, batchId: bId, time: batch.time || '', timestamp: batch.batchId || 0, items: batch.items || [], isLate: (Date.now() - (batch.batchId || 0)) > 300000, orderNumber: batch.orderNumber || '' }); 
+                    }
                 }); 
             }); 
             allOrders.sort((a, b) => b.timestamp - a.timestamp); 
@@ -1820,15 +1793,20 @@
                 const lateClass = order.isLate ? "late-blink" : ""; 
                 html += `<div class="kitchen-order-card ${lateClass}" onclick="this.classList.toggle('expanded-order')"><div class="card-header-pos"><b style="background:#000; color:#fff; padding:3px 10px; border-radius:5px;">${order.tableNum === 'takeaway' ? '🥡 TAKEAWAY' : 'TISCH ' + order.tableNum}</b><b style="color:#2980b9;">🕒 ${order.time || ''}</b><b style="background:#27ae60; padding:2px 8px; border-radius:12px;">Nr.${order.orderNumber}</b></div><div style="flex-grow: 1;">${order.items ? order.items.map(i => `<div style="border-bottom:1px solid #f0f0f0; padding:8px 0;"><div style="font-size:1.1rem; font-weight:bold;">${i.name} <span style="color:#ff9500">x${i.quantity || 1}</span></div><div style="font-size:0.85rem; color:#666;">${i.selectedExtras ? i.selectedExtras.map(e => e.name).join(', ') : ''}</div>${i.note ? `<div style="color:red; background:#fff0f0; padding:3px; margin-top:5px; border-radius:4px; font-size:0.9rem;"><b>!</b> ${i.note}</div>` : ''}</div>`).join('') : 'Keine Items'}</div><button class="btn-main" style="background:#27ae60; margin-top:10px;" onclick="event.stopPropagation(); finishOrder('${order.tableNum}', '${order.batchId}')">FERTIG</button></div>`; 
             }); 
-            container.innerHTML = html || "<h1 style='color:white'>Ladefehler...</h1>"; 
+            container.innerHTML = html || "<h1 style='color:white'>Keine aktiven Bestellungen in der Küche</h1>"; 
         }); 
     }
-    function finishOrder(tNum, bId) { 
-        // Löscht nur den spezifischen Batch, nicht die gesamte Tabelle
-        db.ref('active_orders/' + tNum + '/' + bId).remove().catch(e => console.error(e));
+    
+    // finishOrder: Setzt Status auf 'completed' statt Löschen
+    async function finishOrder(tNum, bId) { 
+        const batchRef = db.ref('active_orders/' + tNum + '/' + bId);
+        await batchRef.update({ status: 'completed' });
+        showToast(`Bestellung für ${tNum === 'takeaway' ? 'Takeaway' : 'Tisch ' + tNum} wurde als fertig markiert.`);
+        // Benachrichtigung optional
+        await db.ref('notifications/kitchen_completed').set({ timestamp: Date.now() });
+        // Die Küchenansicht aktualisiert sich automatisch durch den listener
     }
 
-    // ========== VOICE RECOGNITION (ORIGINAL ALGORITHM) ==========
     let mainRecognition = null;
     let isMainRecording = false;
 
@@ -2066,7 +2044,6 @@
         searchInput.focus();
     }
 
-    // ========== NOTE MIC FUNCTION (inside cart note modal) ==========
     function initNoteMic() {
         const noteMicBtn = document.getElementById('note-mic-btn');
         if (!noteMicBtn) return;
@@ -2118,11 +2095,9 @@
         };
     }
 
-    // ========== CONFIRM ==========
     function showConfirm(msg, cb) { document.getElementById('confirm-message').innerText = msg; confirmCallback = cb; openModal('modal-confirm'); }
     function executeConfirm() { if (confirmCallback) { confirmCallback(); confirmCallback = null; } closeModal('modal-confirm'); }
 
-    // ========== INIT ==========
     function init() { 
         ensureOrders(); 
         renderCats(); 
